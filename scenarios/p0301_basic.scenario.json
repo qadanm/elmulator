@@ -1,0 +1,43 @@
+{
+  "schema_version": "obd2.sim_scenario.v1",
+  "scenario_id": "p0301_basic",
+  "synthetic": true,
+  "description": "Full scan with one stored code P0301 and a freeze frame reply that carries a trailing pad byte. Byte-compatible with the p0301_basic replay trace.",
+  "adapter_profile": "elm327_like_tcp",
+  "defaults": {
+    "at_response": "OK\r\r>",
+    "obd_response": "NO DATA\r\r>"
+  },
+  "stream_split_bytes": null,
+  "warnings": ["freeze frame reply includes one byte of padding beyond the PCI length on purpose"],
+  "commands": [
+    { "request": "ATZ", "response_chunks": ["ELM327 v1.5\r\r>"], "delay_ms": 10, "echo": true },
+    { "request": "ATE0", "response_chunks": ["OK\r\r>"], "delay_ms": 5, "echo": true },
+    { "request": "ATL0", "response_chunks": ["OK\r\r>"], "delay_ms": 5, "echo": false },
+    { "request": "ATH1", "response_chunks": ["OK\r\r>"], "delay_ms": 5, "echo": false },
+    { "request": "ATSP0", "response_chunks": ["OK\r\r>"], "delay_ms": 5, "echo": false },
+    { "request": "0100", "response_chunks": ["SEARCHING...\r7E8 06 41 00 BE 3E B8 11\r\r>"], "delay_ms": 30, "echo": false },
+    { "request": "0120", "response_chunks": ["7E8 06 41 20 80 00 00 00\r\r>"], "delay_ms": 10, "echo": false },
+    { "request": "0101", "response_chunks": ["7E8 06 41 01 81 07 65 04\r\r>"], "delay_ms": 10, "echo": false },
+    { "request": "03", "response_chunks": ["7E8 04 43 01 03 01\r\r>"], "delay_ms": 10, "echo": false },
+    { "request": "07", "response_chunks": ["7E8 02 47 00\r\r>"], "delay_ms": 10, "echo": false },
+    { "request": "0A", "response_chunks": ["7E8 02 4A 00\r\r>"], "delay_ms": 10, "echo": false },
+    { "request": "0902", "response_chunks": ["7E8 10 14 49 02 01 31 43 34\r", "7E8 21 52 4A 46 42 47 38 46\r", "7E8 22 43 31 32 33 34 35 36\r\r>"], "delay_ms": 15, "echo": false },
+    { "request": "010C", "response_chunks": ["7E8 04 41 0C 1A F8\r\r>"], "delay_ms": 8, "echo": false },
+    { "request": "0105", "response_chunks": ["7E8 03 41 05 7B\r\r>"], "delay_ms": 8, "echo": false },
+    { "request": "010D", "response_chunks": ["7E8 03 41 0D 00\r\r>"], "delay_ms": 8, "echo": false },
+    { "request": "0104", "response_chunks": ["7E8 03 41 04 3F\r\r>"], "delay_ms": 8, "echo": false },
+    { "request": "0111", "response_chunks": ["7E8 03 41 11 21\r\r>"], "delay_ms": 8, "echo": false },
+    { "request": "010F", "response_chunks": ["7E8 03 41 0F 37\r\r>"], "delay_ms": 8, "echo": false },
+    { "request": "020200", "response_chunks": ["7E8 05 42 02 00 03 01 00\r\r>"], "delay_ms": 10, "echo": false }
+  ],
+  "expected_scan_summary": {
+    "stored_codes": ["P0301"],
+    "pending_codes": [],
+    "permanent_codes": [],
+    "mil_reported_on": true,
+    "vin_reported": true,
+    "live_value_count": 6,
+    "no_stored_codes_observation": false
+  }
+}

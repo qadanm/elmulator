@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elmulator.dev/spec/obd2.sim_scenario.v1.schema.json",
+  "title": "obd2.sim_scenario.v1",
+  "description": "A synthetic ELM327 conversation used to emulate an OBD2 adapter and to act as a regression oracle. See SPEC.md.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "synthetic",
+    "description",
+    "adapter_profile",
+    "defaults",
+    "commands",
+    "expected_scan_summary",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "obd2.sim_scenario.v1"
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Must match the file name without the .scenario.json suffix."
+    },
+    "synthetic": {
+      "const": true,
+      "description": "Must be true. Emulated bytes must never masquerade as real vehicle data."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_profile": {
+      "type": "string",
+      "description": "Free-form label for the adapter behavior being emulated, e.g. \"elm327_like_tcp\"."
+    },
+    "defaults": {
+      "type": "object",
+      "required": ["at_response", "obd_response"],
+      "additionalProperties": false,
+      "properties": {
+        "at_response": {
+          "type": "string",
+          "description": "Reply for any AT... command with no matching entry."
+        },
+        "obd_response": {
+          "type": "string",
+          "description": "Reply for any non-AT (OBD) request with no matching entry."
+        }
+      }
+    },
+    "stream_split_bytes": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "If set, split every reply into chunks of at most this many bytes (simulates BLE notification / TCP segmentation sizes)."
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Informational notes about intentional quirks in this scenario."
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command" }
+    },
+    "expected_scan_summary": { "$ref": "#/$defs/expectedScanSummary" }
+  },
+  "$defs": {
+    "command": {
+      "type": "object",
+      "required": ["request", "response_chunks"],
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Matched case-insensitively and ignoring all whitespace."
+        },
+        "response_chunks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reply payload pieces, sent in order. \\r and \\n are literal. Joined, then split by stream_split_bytes and any host split pattern."
+        },
+        "delay_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Delay before the first chunk of this reply."
+        },
+        "echo": {
+          "type": "boolean",
+          "default": false,
+          "description": "Prepend the normalized request (plus \\r) to the reply, like ELM echo."
+        },
+        "prompt": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this reply ends at the ELM prompt '>'. Used by the validator to check chunk content."
+        },
+        "post_action": {
+          "enum": ["none", "stall", "disconnect"],
+          "default": "none",
+          "description": "none: normal. stall: send nothing (force a client timeout). disconnect: close the connection after any chunks."
+        },
+        "repeat": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this entry keeps answering on every later match (pins the cursor). The last matching entry also repeats by default."
+        }
+      }
+    },
+    "expectedScanSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Consumer-defined expectations. The emulator never interprets these; a scan/decoder asserts them so the scenario is self-checking.",
+      "properties": {
+        "stored_codes": { "type": "array", "items": { "type": "string" } },
+        "pending_codes": { "type": "array", "items": { "type": "string" } },
+        "permanent_codes": { "type": "array", "items": { "type": "string" } },
+        "mil_reported_on": { "type": "boolean" },
+        "vin_reported": { "type": "boolean" },
+        "live_value_count": { "type": "integer", "minimum": 0 },
+        "min_session_warnings": { "type": "integer", "minimum": 0 },
+        "no_stored_codes_observation": { "type": "boolean" },
+        "scan_error": { "type": "string" }
+      }
+    }
+  }
+}

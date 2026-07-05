@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python (server, validator, conformance)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package + pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./python pytest
+      - name: Validate example scenarios
+        run: elmulator validate scenarios/
+      - name: Self-test
+        run: elmulator self-test
+      - name: Unit tests
+        run: pytest -q
+        working-directory: python
+      - name: Conformance (python determinism)
+        run: python conformance/run_conformance.py
+
+  swift:
+    name: Swift (build, test, conformance vs Python)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python package
+        run: pip install -e ./python
+      - name: Build
+        run: swift build
+        working-directory: swift
+      - name: Test
+        run: swift test
+        working-directory: swift
+      - name: Conformance (Python vs Swift, byte-for-byte)
+        run: |
+          swift build --product elmulator-tcp
+          python conformance/run_conformance.py \
+            --swift-bin swift/.build/debug/elmulator-tcp
+        working-directory: .

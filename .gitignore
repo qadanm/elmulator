@@ -1,0 +1,20 @@
+# Swift / SwiftPM
+swift/.build/
+swift/.swiftpm/
+*.xcodeproj
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+python/build/
+python/dist/
+python/*.egg-info/
+src/*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Editors
+.idea/
+.vscode/
