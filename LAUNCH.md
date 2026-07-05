@@ -1,8 +1,20 @@
 # Launch runbook
 
-The research says: get ~50–100 stars in the first 24–48h by firing the channels in one window. Everything here is prepared; the steps marked **[you]** need your accounts and are the deliberate, outward-facing triggers.
+The research says: get ~50–100 stars in the first 24–48h by firing the channels in one window.
 
-Pre-flight (done): core 28/28, iOS example 3/3, Python + byte-for-byte conformance green; demo asset, CI, and docs in place.
+## Status
+
+**Done & live:**
+- Repo public: <https://github.com/qadanm/elmulator> — description + 18 topics, `v0.1.0` tagged, **CI green** (macOS Swift + Ubuntu Python).
+- Demo asset (`assets/demo.svg`) rendering in the README; badges added.
+- **awesome-canbus PR open:** <https://github.com/iDoka/awesome-canbus/pull/56>
+- **Swift Package Index PR open:** <https://github.com/SwiftPackageIndex/PackageList/pull/14297>
+
+**Remaining — needs your accounts (the two genuine human-only steps):**
+1. **PyPI** — set up the trusted publisher, then cut a GitHub release (§1 below). I can't touch your PyPI account.
+2. **Show HN** — submit the drafted post (§3). Your voice, your timing.
+
+Pre-flight verified: Swift 31/31, Python + byte-for-byte conformance green.
 
 ---
 
