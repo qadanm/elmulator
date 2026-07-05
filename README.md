@@ -13,12 +13,13 @@ Every consumer OBD2 app talks to a Bluetooth adapter. Almost none can test that 
 
 - 🔵 **Real BLE peripheral.** A macOS process advertises a genuine ELM327-style GATT profile (Nordic UART by default). Your app connects over actual Bluetooth — no mock objects.
 - 🧪 **In-process test double.** The same scenario engine behind a `BLEStack` protocol: swap the real CoreBluetooth central for the fake one and run your whole Bluetooth connection flow in unit tests, no radio.
+- 🍏 **Works with your existing CoreBluetooth code.** A bridge to Nordic's [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock) turns any scenario into a mock BLE peripheral, so your real `CBCentralManager` code runs against a scripted ELM327 in `swift test` — see the [iOS CI guide](docs/testing-obd2-apps-in-ci.md).
 - 🔌 **TCP server too.** One command exposes any scenario over a socket — for the Simulator, Android, or any language.
 - 📜 **Scenarios are just JSON.** Script the exact ELM327 conversation: responses, chunking, latency, deterministic jitter, stalls, disconnects, malformed frames. Each scenario is also a regression oracle.
 - ♻️ **Chaos built in.** BLE-MTU chunking, timeouts, dropped connections, garbage bytes — the failures that only ever happen on a real adapter.
 - ✅ **Proven equivalent.** The Python and Swift servers are held **byte-for-byte identical** by a [conformance suite](conformance/), so the scenario format is a real spec, not one implementation's quirks.
 
-> The closest existing tool, [ELM327-emulator](https://github.com/Ircama/ELM327-emulator), is excellent but TCP/serial-only and licensed CC-BY-NC-SA (no Bluetooth, no commercial use). elmulator adds Bluetooth LE and is MIT.
+> The closest existing tool, [ELM327-emulator](https://github.com/Ircama/ELM327-emulator), is excellent, but its "Bluetooth" is RFCOMM serial (Bluetooth *Classic* SPP) — not the BLE/GATT that every iOS adapter uses — and it's licensed CC-BY-NC-SA (non-commercial). elmulator adds native BLE, an iOS/CI test story, and is MIT. (Claims verified against its repo, July 2026.)
 
 ## Quickstart
 
@@ -64,6 +65,22 @@ swift run elmulator-ble --scenario ../scenarios/p0420_basic.scenario.json
 # iPhone/app to it over CoreBluetooth
 ```
 
+## Test your iOS OBD2 app in CI
+
+The iOS Simulator has no Bluetooth and Apple provides [no supported way to mock `CBPeripheral`](https://developer.apple.com/forums/thread/764024), so the Bluetooth path is usually the untested part of an OBD2 app. elmulator + [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock) fixes that — your **real** CoreBluetooth code runs against a scripted ELM327 on a plain macOS runner:
+
+```swift
+let adapter = ElmulatorMockPeripheral(scenario: try .load(from: url))
+adapter.simulate()                                  // scripted ELM327 as a mock BLE peripheral
+let client = MyOBDClient(forceMock: true)           // your real CBCentralManager code
+try await client.connect()
+#expect(try await client.send("03").contains("43 01 04 20"))   // reads P0420, no radio
+```
+
+- **Full walkthrough:** [docs/testing-obd2-apps-in-ci.md](docs/testing-obd2-apps-in-ci.md)
+- **Copy-this sample + passing CI suite:** [examples/ios-ci/](examples/ios-ci/)
+- **Building on [SwiftOBD2](https://github.com/kkonteh97/SwiftOBD2)?** [docs/testing-swiftobd2.md](docs/testing-swiftobd2.md)
+
 ## What's in the box
 
 | Piece | Where | What it is |
@@ -71,6 +88,7 @@ swift run elmulator-ble --scenario ../scenarios/p0420_basic.scenario.json
 | Scenario engine | `swift` → `Elmulator`, `python` | Pure request→reply engine: matching, echo, defaults, chunking, seeded jitter, stall/disconnect |
 | TCP server | `Elmulator​TCP` (in-process) · `elmulator-tcp` / `elmulator serve` (CLI) | Serve a scenario over localhost TCP |
 | **BLE test double** | `Elmulator​BLETestSupport` → `FakeBLEStack` | In-process fake central for CI, behind the `BLEStack` protocol |
+| **CoreBluetooth-Mock bridge** | `Elmulator​CoreBluetoothMock` → `ElmulatorMockPeripheral` | Turn a scenario into a mock BLE peripheral so your **real** CoreBluetooth code runs in CI |
 | **BLE peripheral** | `elmulator-ble` (macOS) | Real CoreBluetooth peripheral advertising an ELM327 GATT profile |
 | BLE transport kit | `ElmulatorBLE` | GATT profile, connection state machine, `BLEStack` protocol, real central |
 | Scenario format | [`SPEC.md`](SPEC.md) + [`spec/`](spec/) | The public contract (`obd2.sim_scenario.v1`) + JSON Schema |

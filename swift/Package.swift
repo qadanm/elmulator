@@ -14,10 +14,21 @@ let package = Package(
         .library(name: "ElmulatorBLE", targets: ["ElmulatorBLE"]),
         // The in-process fake BLE central — swap it for the real one in tests.
         .library(name: "ElmulatorBLETestSupport", targets: ["ElmulatorBLETestSupport"]),
+        // Bridge to Nordic's CoreBluetooth-Mock: test an app's real
+        // CoreBluetooth code against a scripted ELM327, no radio.
+        .library(name: "ElmulatorCoreBluetoothMock", targets: ["ElmulatorCoreBluetoothMock"]),
         // CLI TCP server (parity with `elmulator serve` in Python).
         .executable(name: "elmulator-tcp", targets: ["elmulator-tcp"]),
         // macOS executable: advertise a scenario as a real BLE peripheral.
         .executable(name: "elmulator-ble", targets: ["elmulator-ble"]),
+    ],
+    dependencies: [
+        // Only the ElmulatorCoreBluetoothMock target links this; the pure
+        // engine / TCP / BLE products do not depend on it.
+        .package(
+            url: "https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock.git",
+            from: "1.0.0"
+        ),
     ],
     targets: [
         .target(name: "Elmulator"),
@@ -26,6 +37,14 @@ let package = Package(
         .target(
             name: "ElmulatorBLETestSupport",
             dependencies: ["Elmulator", "ElmulatorBLE"]
+        ),
+        .target(
+            name: "ElmulatorCoreBluetoothMock",
+            dependencies: [
+                "Elmulator",
+                "ElmulatorBLE",
+                .product(name: "CoreBluetoothMock", package: "IOS-CoreBluetooth-Mock"),
+            ]
         ),
         .executableTarget(
             name: "elmulator-tcp",

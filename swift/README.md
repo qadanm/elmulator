@@ -21,6 +21,7 @@ dependencies: [
 | `ElmulatorTCP` | `import ElmulatorTCP` | iOS/macOS | `FakeELMTCPServer` — host a scenario over localhost TCP in-process. |
 | `ElmulatorBLE` | `import ElmulatorBLE` | iOS/macOS | GATT profile, `BLEConnectionStateMachine` (pure), `BLEStack` protocol, and `makeCoreBluetoothStack()` (real central). |
 | `ElmulatorBLETestSupport` | `import ElmulatorBLETestSupport` | iOS/macOS | `FakeBLEStack` — the in-process fake central. Depend on it from your test target. |
+| `ElmulatorCoreBluetoothMock` | `import ElmulatorCoreBluetoothMock` | iOS/macOS | `ElmulatorMockPeripheral` — bridge a scenario to [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock) so your **real** `CBCentralManager` code runs against a scripted ELM327. Pulls in CoreBluetooth-Mock (this product only). |
 
 ## Executables
 

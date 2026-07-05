@@ -1,6 +1,10 @@
 # Swift / SwiftPM
+.build/
 swift/.build/
 swift/.swiftpm/
+examples/ios-ci/.build/
+examples/ios-ci/.swiftpm/
+Package.resolved
 *.xcodeproj
 .DS_Store
 
