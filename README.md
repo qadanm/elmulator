@@ -8,6 +8,7 @@
 
 <p>
   <a href="https://github.com/qadanm/elmulator/actions/workflows/ci.yml"><img src="https://github.com/qadanm/elmulator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pypi.org/project/elmulator/"><img src="https://img.shields.io/pypi/v/elmulator" alt="PyPI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Swift-6-orange.svg" alt="Swift 6">
   <img src="https://img.shields.io/badge/OBD--II-SAE%20J1979%20%2F%20ISO%2015765--4-informational" alt="SAE J1979 / ISO 15765-4">
