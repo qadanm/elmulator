@@ -6,10 +6,9 @@ import Testing
 /// Locate the repo's `scenarios/` directory relative to this source file so
 /// tests need no working-directory assumptions or external fixtures package.
 func scenarioURL(_ name: String) -> URL {
-    URL(filePath: #filePath)            // .../swift/Tests/ElmulatorTests/EngineTests.swift
-        .deletingLastPathComponent()    // .../ElmulatorTests
-        .deletingLastPathComponent()    // .../Tests
-        .deletingLastPathComponent()    // .../swift
+    URL(filePath: #filePath)            // .../Tests/ElmulatorTests/EngineTests.swift
+        .deletingLastPathComponent()    // ElmulatorTests
+        .deletingLastPathComponent()    // Tests
         .deletingLastPathComponent()    // repo root
         .appending(path: "scenarios")
         .appending(path: "\(name).scenario.json")

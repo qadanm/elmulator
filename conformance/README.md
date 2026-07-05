@@ -8,8 +8,8 @@ For each example scenario, the harness drives the scenario's own command sequenc
 
 ```bash
 # Python vs Swift (requires a built Swift binary):
-cd swift && swift build --product elmulator-tcp && cd ..
-python conformance/run_conformance.py --swift-bin swift/.build/debug/elmulator-tcp
+swift build --product elmulator-tcp
+python conformance/run_conformance.py --swift-bin .build/debug/elmulator-tcp
 
 # Python-only determinism check (no Swift toolchain, e.g. Linux CI):
 python conformance/run_conformance.py

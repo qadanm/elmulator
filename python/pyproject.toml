@@ -21,9 +21,9 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/elmulator/elmulator"
-Repository = "https://github.com/elmulator/elmulator"
-Specification = "https://github.com/elmulator/elmulator/blob/main/SPEC.md"
+Homepage = "https://github.com/qadanm/elmulator"
+Repository = "https://github.com/qadanm/elmulator"
+Specification = "https://github.com/qadanm/elmulator/blob/main/SPEC.md"
 
 [project.scripts]
 elmulator = "elmulator.cli:main"

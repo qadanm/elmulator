@@ -59,8 +59,7 @@ let stack: any BLEStack = FakeBLEStack(scenario: scenario)   // in-process fake 
 For device-level testing against a physical iPhone or another machine:
 
 ```bash
-cd swift
-swift run elmulator-ble --scenario ../scenarios/p0420_basic.scenario.json
+swift run elmulator-ble --scenario scenarios/p0420_basic.scenario.json
 ```
 
 This advertises a real ELM327-style GATT service (Nordic UART UUIDs by default). Flags: `--name`, `--service/--write-uuid/--notify-uuid`, `--chunk-size`, `--latency-ms`, `--jitter-ms`, `--seed`, `--split`, `--disconnect-after`. macOS will prompt for Bluetooth permission the first time.

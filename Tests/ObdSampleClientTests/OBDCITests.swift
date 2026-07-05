@@ -7,11 +7,9 @@ import Testing
 
 /// Locate the repo's `scenarios/` directory relative to this source file.
 private func scenarioURL(_ name: String) -> URL {
-    URL(filePath: #filePath)            // .../examples/ios-ci/Tests/ObdSampleClientTests/OBDCITests.swift
+    URL(filePath: #filePath)            // .../Tests/ObdSampleClientTests/OBDCITests.swift
         .deletingLastPathComponent()    // ObdSampleClientTests
         .deletingLastPathComponent()    // Tests
-        .deletingLastPathComponent()    // ios-ci
-        .deletingLastPathComponent()    // examples
         .deletingLastPathComponent()    // repo root
         .appending(path: "scenarios")
         .appending(path: "\(name).scenario.json")
@@ -58,7 +56,7 @@ struct OBDCITests {
 
     @Test("reassembles a reply split across many BLE notifications")
     func chunkedReassembly() async throws {
-        // This scenario ships its replies in 7-byte pieces; the client must
+        // This scenario ships its replies in small pieces; the client must
         // stitch them back into one response ending at the prompt.
         try await withScriptedAdapter("chunked_stream", notifyChunkSize: 4) { client in
             _ = try await client.send("ATZ")

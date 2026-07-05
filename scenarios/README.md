@@ -19,7 +19,7 @@ Seven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a
 elmulator serve scenarios/p0420_basic.scenario.json --port 35000
 
 # Real BLE peripheral (macOS)
-cd swift && swift run elmulator-ble --scenario ../scenarios/p0420_basic.scenario.json
+swift run elmulator-ble --scenario scenarios/p0420_basic.scenario.json
 ```
 
 ## Adding your own

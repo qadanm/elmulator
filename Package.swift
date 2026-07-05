@@ -54,6 +54,16 @@ let package = Package(
             name: "elmulator-ble",
             dependencies: ["Elmulator", "ElmulatorBLE"]
         ),
+        // Copy-this example: a realistic ELM327 BLE client in pure
+        // CoreBluetooth-Mock (no elmulator import). Not a product — it's an
+        // example the docs point to, and the test target below drives it
+        // against scripted scenarios in CI with no radio.
+        .target(
+            name: "ObdSampleClient",
+            dependencies: [
+                .product(name: "CoreBluetoothMock", package: "IOS-CoreBluetooth-Mock"),
+            ]
+        ),
         .testTarget(
             name: "ElmulatorTests",
             dependencies: ["Elmulator", "ElmulatorTCP"]
@@ -61,6 +71,15 @@ let package = Package(
         .testTarget(
             name: "ElmulatorBLETests",
             dependencies: ["ElmulatorBLE", "ElmulatorBLETestSupport", "Elmulator"]
+        ),
+        .testTarget(
+            name: "ObdSampleClientTests",
+            dependencies: [
+                "ObdSampleClient",
+                "Elmulator",
+                "ElmulatorCoreBluetoothMock",
+                .product(name: "CoreBluetoothMock", package: "IOS-CoreBluetooth-Mock"),
+            ]
         ),
     ]
 )

@@ -9,11 +9,11 @@ Thanks for helping build a better OBD2 test harness. This is an MIT-licensed, cl
 cd python && pip install -e . pytest && pytest -q && cd ..
 
 # Swift
-cd swift && swift build && swift test && cd ..
+swift build && swift test
 
 # Cross-implementation parity
-cd swift && swift build --product elmulator-tcp && cd ..
-python conformance/run_conformance.py --swift-bin swift/.build/debug/elmulator-tcp
+swift build --product elmulator-tcp
+python conformance/run_conformance.py --swift-bin .build/debug/elmulator-tcp
 ```
 
 ## The bar for a change

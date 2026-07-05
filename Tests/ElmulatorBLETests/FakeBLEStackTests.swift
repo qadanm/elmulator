@@ -6,10 +6,9 @@ import Testing
 
 /// Locate the repo's `scenarios/` directory relative to this source file.
 private func scenarioURL(_ name: String) -> URL {
-    URL(filePath: #filePath)            // .../swift/Tests/ElmulatorBLETests/FakeBLEStackTests.swift
-        .deletingLastPathComponent()    // .../ElmulatorBLETests
-        .deletingLastPathComponent()    // .../Tests
-        .deletingLastPathComponent()    // .../swift
+    URL(filePath: #filePath)            // .../Tests/ElmulatorBLETests/FakeBLEStackTests.swift
+        .deletingLastPathComponent()    // ElmulatorBLETests
+        .deletingLastPathComponent()    // Tests
         .deletingLastPathComponent()    // repo root
         .appending(path: "scenarios")
         .appending(path: "\(name).scenario.json")

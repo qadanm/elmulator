@@ -40,16 +40,10 @@ jobs:
         run: pip install -e ./python
       - name: Build
         run: swift build
-        working-directory: swift
-      - name: Test
+      - name: Test (engine, BLE state machine, and the iOS CI example — no radio)
         run: swift test
-        working-directory: swift
       - name: Conformance (Python vs Swift, byte-for-byte)
         run: |
           swift build --product elmulator-tcp
           python conformance/run_conformance.py \
-            --swift-bin swift/.build/debug/elmulator-tcp
-        working-directory: .
-      - name: iOS CI example (real CoreBluetooth code vs scripted BLE, no radio)
-        run: swift test
-        working-directory: examples/ios-ci
+            --swift-bin .build/debug/elmulator-tcp
