@@ -4,8 +4,10 @@
 
 Test your OBD2 app against a fake ELM327 — over real Bluetooth LE or TCP — with no car, no adapter, and no phone. MIT-licensed.
 
-<!-- badges: add CI / SPM / PyPI once published -->
-`SwiftPM` · `PyPI` · `SAE J1979 / ISO 15765-4` · `MIT`
+[![CI](https://github.com/qadanm/elmulator/actions/workflows/ci.yml/badge.svg)](https://github.com/qadanm/elmulator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)
+![SAE J1979 / ISO 15765-4](https://img.shields.io/badge/OBD--II-SAE%20J1979%20%2F%20ISO%2015765--4-informational)
 
 ![Your real CoreBluetooth OBD2 code, tested against a scripted ELM327 in CI with no radio](assets/demo.svg)
 
