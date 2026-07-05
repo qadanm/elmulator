@@ -1,19 +1,44 @@
-# elmulator
+<div align="center">
 
-**A scriptable Bluetooth + TCP OBD2 adapter emulator and CI test harness.**
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+  <img alt="elmulator" src="assets/logo-light.svg" width="340">
+</picture>
 
-Test your OBD2 app against a fake ELM327 — over real Bluetooth LE or TCP — with no car, no adapter, and no phone. MIT-licensed.
+<h3>A scriptable Bluetooth&nbsp;+&nbsp;TCP OBD2 adapter emulator and CI test harness</h3>
 
-[![CI](https://github.com/qadanm/elmulator/actions/workflows/ci.yml/badge.svg)](https://github.com/qadanm/elmulator/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)
-![SAE J1979 / ISO 15765-4](https://img.shields.io/badge/OBD--II-SAE%20J1979%20%2F%20ISO%2015765--4-informational)
+<p>Test your OBD2 app against a fake ELM327 — over real Bluetooth&nbsp;LE or TCP —<br>with no car, no adapter, and no phone. MIT-licensed.</p>
 
-![Your real CoreBluetooth OBD2 code, tested against a scripted ELM327 in CI with no radio](assets/demo.svg)
+<p>
+  <a href="https://github.com/qadanm/elmulator/actions/workflows/ci.yml"><img src="https://github.com/qadanm/elmulator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/Swift-6-orange.svg" alt="Swift 6">
+  <img src="https://img.shields.io/badge/OBD--II-SAE%20J1979%20%2F%20ISO%2015765--4-informational" alt="SAE J1979 / ISO 15765-4">
+</p>
+
+<br>
+
+<img alt="Your real CoreBluetooth OBD2 code, tested against a scripted ELM327 in CI with no radio" src="assets/demo.svg" width="760">
+
+<p>
+  <a href="docs/getting-started.md"><b>Getting started</b></a> &nbsp;·&nbsp;
+  <a href="SPEC.md">Scenario spec</a> &nbsp;·&nbsp;
+  <a href="docs/testing-obd2-apps-in-ci.md">iOS CI guide</a> &nbsp;·&nbsp;
+  <a href="scenarios/">Scenarios</a>
+</p>
+
+</div>
 
 ---
 
 Every consumer OBD2 app talks to a Bluetooth adapter. Almost none can test that path: the iOS Simulator has no radio, and the alternative is a phone plus a dongle plus a car in a parking lot. **elmulator makes the adapter fake and scriptable** so your Bluetooth stack runs in CI.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture-dark.svg">
+    <img alt="Your OBD2 app talks to a scripted ELM327 (mock BLE) and CI passes — with no car, no adapter, and no radio" src="assets/architecture-light.svg" width="880">
+  </picture>
+</p>
 
 - 🔵 **Real BLE peripheral.** A macOS process advertises a genuine ELM327-style GATT profile (Nordic UART by default). Your app connects over actual Bluetooth — no mock objects.
 - 🧪 **In-process test double.** The same scenario engine behind a `BLEStack` protocol: swap the real CoreBluetooth central for the fake one and run your whole Bluetooth connection flow in unit tests, no radio.

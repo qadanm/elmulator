@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect x="2" y="2" width="40" height="40" rx="11" fill="#2f81f7"/>
+  <path d="M15 15 L23 22 L15 29" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="26" y="25" width="9" height="4" rx="1" fill="#ffffff"/>
+  <text x="52" y="31" font-size="27" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="#2f81f7">elm</tspan><tspan fill="#e6edf3">ulator</tspan>
+  </text>
+</svg>
