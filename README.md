@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
-  <img alt="elmulator" src="assets/logo-light.svg" width="340">
-</picture>
+<img alt="elmulator" src="assets/logo.svg" width="340">
 
 <h3>A scriptable Bluetooth&nbsp;+&nbsp;TCP OBD2 adapter emulator and CI test harness</h3>
 
