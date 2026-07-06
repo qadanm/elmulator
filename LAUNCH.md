@@ -72,23 +72,24 @@ Follow the repo's CONTRIBUTING (entries alphabetical within a section if require
 
 ---
 
-## 3. Show HN [you submit]
+## 3. Show HN [you write and submit]
 
-How: go to <https://news.ycombinator.com/submit>, paste the title and the URL, click submit, then paste the first comment as your own reply. Good timing is roughly 8 to 10am ET on a Tuesday to Thursday.
+Important: HN guidelines say don't post generated or AI-edited text. Write the comment yourself, in your own words. The outline below is notes to write from, not text to paste.
 
-**Title:**
+How: go to <https://news.ycombinator.com/submit>, enter the title and the URL, submit, then write your first comment as a reply. Roughly 8 to 10am ET, Tuesday to Thursday, is a good window. Don't ask anyone to upvote or comment on the thread; that's against the rules.
+
+**Title:** (this format is fine as-is; no caps, no numbers, no hype)
 > Show HN: Elmulator, a scriptable fake ELM327 for testing OBD2 apps without a car
 
 **URL:** `https://github.com/qadanm/elmulator`
 
-**First comment:**
-> I make an OBD2 app, the kind that reads your car's diagnostics over one of those cheap Bluetooth dongles. The connection to the dongle was always the part I couldn't really test. The iOS Simulator can't do Bluetooth, and Apple won't let you fake a CBPeripheral, so my choices were to run it on a real phone with a real adapter plugged into a real car, or just not test it. I did a lot of not testing it.
->
-> Elmulator is the fake adapter I ended up building. You describe the adapter in a small JSON file: what it replies to each command, how it splits the reply into Bluetooth-sized chunks, how long it waits, and when it stalls or drops the connection or sends back garbage. Then you can run that scripted adapter three ways: as a real Bluetooth LE peripheral (a little macOS program), as a plain TCP server, or as an in-process fake inside your tests. The last one is the whole reason I built it. My real CoreBluetooth code now runs against a scripted adapter under `swift test`, on a normal CI runner, with no hardware.
->
-> There's an older tool, Ircama's ELM327-emulator, that's good and has been around a while, but it's TCP and serial only (its "Bluetooth" is the old serial profile, not BLE) and its license blocks commercial use. Elmulator does BLE and is MIT, which is honestly why I wrote my own instead of using it. The Python and Swift servers are tested against each other so they reply the same way, which keeps the JSON format from drifting.
->
-> Two honest caveats: the real-radio BLE peripheral is macOS only for now, and scenarios are written by hand, so there's no "record a real adapter" button yet. Both are on my list. It's Swift and Python, there's a copy-paste example in the repo, and the tests it runs in CI are right there too. Would love to hear what breaks or what's missing.
+**Points to cover in your own words:**
+- The itch: you build an OBD2 app, and the Bluetooth link to the dongle was the one part you couldn't test. The Simulator has no Bluetooth and you can't fake a CBPeripheral, so testing meant a phone, an adapter, and a car.
+- What it is: a fake ELM327 you script in a JSON file (its replies, how it chunks them, timing, stalls, disconnects, garbage).
+- The three ways to run it: a real BLE peripheral on macOS, a TCP server, or an in-process fake in your tests. Say which one you actually care about and why (real CoreBluetooth code under `swift test`, in CI, no hardware).
+- Honest comparison: Ircama's ELM327-emulator is good but TCP/serial only and its license blocks commercial use; yours does BLE and is MIT.
+- Two honest caveats: the real BLE peripheral is macOS only for now; scenarios are hand-written (no record button yet).
+- Close by inviting real feedback, not stars.
 
 **Also worth posting in the same window:** r/embedded, r/iOSProgramming, r/CarHacking, and a reply in the Apple Developer Forums thread about mocking `CBPeripheral` with a link back.
 
