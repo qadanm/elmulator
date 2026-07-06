@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "elmulator"
 version = "0.1.0"
-description = "A scriptable Bluetooth + TCP OBD2 (ELM327) adapter emulator and CI test harness."
+description = "A scriptable Bluetooth LE and TCP OBD2 (ELM327) adapter emulator and CI test harness."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

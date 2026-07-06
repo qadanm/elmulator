@@ -1,0 +1,15 @@
+# elmulator
+
+> elmulator is an MIT-licensed emulator for ELM327 OBD2 adapters over Bluetooth LE and TCP, with a test harness for running an app's Bluetooth code in CI without a car, an adapter, or a radio. It is written in Swift and Python.
+
+## Docs
+- [Getting started](https://github.com/qadanm/elmulator/blob/main/docs/getting-started.md): three ways to point an app at a fake adapter.
+- [Test an iOS OBD2 app in CI](https://github.com/qadanm/elmulator/blob/main/docs/testing-obd2-apps-in-ci.md): run real CoreBluetooth code against a scripted ELM327 with no radio.
+- [Mock an ELM327 over Bluetooth](https://github.com/qadanm/elmulator/blob/main/docs/mock-elm327-over-bluetooth.md): in-process fake, CoreBluetooth-Mock bridge, and a real BLE peripheral.
+- [elmulator vs ELM327-emulator](https://github.com/qadanm/elmulator/blob/main/docs/elmulator-vs-elm327-emulator.md): comparison and when to use each.
+- [FAQ](https://github.com/qadanm/elmulator/blob/main/docs/faq.md): short answers to common questions.
+- [Scenario format](https://github.com/qadanm/elmulator/blob/main/SPEC.md): the obd2.sim_scenario.v1 specification.
+
+## Source
+- [Repository](https://github.com/qadanm/elmulator)
+- [PyPI package](https://pypi.org/project/elmulator/)

@@ -2,7 +2,7 @@
 
 <img alt="elmulator" src="assets/logo.svg" width="340">
 
-<h3>A scriptable Bluetooth and TCP OBD2 adapter emulator and CI test harness</h3>
+<h3>A scriptable Bluetooth LE and TCP OBD2 (ELM327) adapter emulator and CI test harness</h3>
 
 <p>Test your OBD2 app against a fake ELM327 over Bluetooth LE or TCP, without a car or a real adapter. MIT licensed.</p>
 
@@ -121,6 +121,14 @@ try await client.connect()
 | Scenario format | [`SPEC.md`](SPEC.md) and [`spec/`](spec/) | the `obd2.sim_scenario.v1` contract and its JSON Schema |
 | Example library | [`scenarios/`](scenarios/) | seven scenarios, each doubling as a regression fixture |
 | Conformance suite | [`conformance/`](conformance/) | byte-for-byte parity across implementations |
+
+## Docs
+
+- [Getting started](docs/getting-started.md): TCP, in-process, and a real BLE peripheral.
+- [Test an iOS OBD2 app in CI](docs/testing-obd2-apps-in-ci.md): your real CoreBluetooth code, no radio.
+- [Mock an ELM327 over Bluetooth](docs/mock-elm327-over-bluetooth.md): the three ways to fake the adapter.
+- [elmulator vs ELM327-emulator](docs/elmulator-vs-elm327-emulator.md): what each one is for.
+- [FAQ](docs/faq.md), plus the full [docs index](docs/).
 
 ## The scenario format
 
