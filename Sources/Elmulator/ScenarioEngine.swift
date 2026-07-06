@@ -14,19 +14,55 @@ public struct EngineConfiguration: Sendable {
     /// Deterministic jitter bound (0 disables). Uses `seed`.
     public var jitterMS: Int
     public var seed: UInt64
+    /// When true, the engine records a `TranscriptEntry` for every command it
+    /// plans, readable via `ScenarioEngine.transcript`. Off by default.
+    public var recordTranscript: Bool
 
     public init(
         splitPattern: [Int]? = nil,
         echoOverride: Bool? = nil,
         extraLatencyMS: Int = 0,
         jitterMS: Int = 0,
-        seed: UInt64 = 0
+        seed: UInt64 = 0,
+        recordTranscript: Bool = false
     ) {
         self.splitPattern = splitPattern
         self.echoOverride = echoOverride
         self.extraLatencyMS = extraLatencyMS
         self.jitterMS = jitterMS
         self.seed = seed
+        self.recordTranscript = recordTranscript
+    }
+}
+
+/// One line of the conversation the engine served: the command, what it
+/// matched, the reply bytes, and the post-action. Useful for printing a
+/// byte-level log when a test fails.
+public struct TranscriptEntry: Sendable, Equatable {
+    public let rawCommand: String
+    public let normalized: String
+    /// Nil when no scenario entry matched and a default reply was used.
+    public let matchedRequest: String?
+    public let replyBytes: [UInt8]
+    public let postAction: Scenario.PostAction
+
+    public var joinedASCII: String {
+        String(decoding: replyBytes, as: UTF8.self)
+    }
+
+    /// A single readable line, for example
+    /// `03 -> matched '03' -> 7E8 04 43 01 04 20\r\r> [none]`.
+    public func debugDump() -> String {
+        let source = matchedRequest.map { "matched '\($0)'" } ?? "default"
+        let reply: String
+        if replyBytes.isEmpty {
+            reply = postAction == .stall ? "<stall, no reply>" : "<no bytes>"
+        } else {
+            reply = joinedASCII
+                .replacingOccurrences(of: "\r", with: "\\r")
+                .replacingOccurrences(of: "\n", with: "\\n")
+        }
+        return "\(rawCommand) -> \(source) -> \(reply) [\(postAction.rawValue)]"
     }
 }
 
@@ -57,6 +93,10 @@ public struct ScenarioEngine: Sendable {
     private var cursors: [String: Int] = [:]
     private var random: SplitMix64
 
+    /// The conversation served so far, when `configuration.recordTranscript`
+    /// is on. Empty otherwise.
+    public private(set) var transcript: [TranscriptEntry] = []
+
     public init(scenario: Scenario, configuration: EngineConfiguration = .init()) {
         self.scenario = scenario
         self.configuration = configuration
@@ -72,6 +112,20 @@ public struct ScenarioEngine: Sendable {
 
     public mutating func plan(for rawCommand: String) -> ResponsePlan {
         let normalized = Self.normalize(rawCommand)
+        let plan = makePlan(for: rawCommand, normalized: normalized)
+        if configuration.recordTranscript {
+            transcript.append(TranscriptEntry(
+                rawCommand: rawCommand,
+                normalized: normalized,
+                matchedRequest: plan.matchedRequest,
+                replyBytes: plan.pieces.flatMap(\.bytes),
+                postAction: plan.postAction
+            ))
+        }
+        return plan
+    }
+
+    private mutating func makePlan(for rawCommand: String, normalized: String) -> ResponsePlan {
         let entries = scenario.commands.enumerated().filter {
             Self.normalize($0.element.request) == normalized
         }

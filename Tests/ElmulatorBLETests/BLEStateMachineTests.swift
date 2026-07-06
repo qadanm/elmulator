@@ -4,16 +4,16 @@ import Testing
 
 @Suite("BLE connection state machine")
 struct BLEStateMachineTests {
-    let profile = BLEAdapterProfile.fakeELM
-    var peripheral: BLEDiscoveredPeripheral {
-        BLEDiscoveredPeripheral(id: "PERIPH-1", name: "FakeELM")
+    let profile = AdapterProfile.fakeELM
+    var peripheral: DiscoveredPeripheral {
+        DiscoveredPeripheral(id: "PERIPH-1", name: "FakeELM")
     }
 
     /// Drives the machine through the full happy path and returns the
     /// actions emitted at each step for inspection.
-    func driveToReady() -> (machine: BLEConnectionStateMachine, actions: [BLEConnectionAction]) {
-        var machine = BLEConnectionStateMachine(profile: profile)
-        var actions: [BLEConnectionAction] = []
+    func driveToReady() -> (machine: ConnectionStateMachine, actions: [ConnectionAction]) {
+        var machine = ConnectionStateMachine(profile: profile)
+        var actions: [ConnectionAction] = []
         actions += machine.handle(.start)
         actions += machine.handle(.poweredOn)
         actions += machine.handle(.discovered(peripheral))
@@ -56,7 +56,7 @@ struct BLEStateMachineTests {
 
     @Test("UUID matching is case insensitive like CoreBluetooth")
     func caseInsensitiveUUIDs() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
         _ = machine.handle(.discovered(peripheral))
@@ -76,20 +76,20 @@ struct BLEStateMachineTests {
 
     @Test("peripheral match filters by name")
     func peripheralMatch() {
-        var machine = BLEConnectionStateMachine(profile: profile, peripheralMatch: "OBDII")
+        var machine = ConnectionStateMachine(profile: profile, peripheralMatch: "OBDII")
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
-        let ignored = machine.handle(.discovered(BLEDiscoveredPeripheral(id: "OTHER", name: "SomethingElse")))
+        let ignored = machine.handle(.discovered(DiscoveredPeripheral(id: "OTHER", name: "SomethingElse")))
         #expect(ignored.isEmpty)
         #expect(machine.state == .scanning)
-        let matched = machine.handle(.discovered(BLEDiscoveredPeripheral(id: "TARGET", name: "Vgate OBDII BLE")))
+        let matched = machine.handle(.discovered(DiscoveredPeripheral(id: "TARGET", name: "Vgate OBDII BLE")))
         #expect(machine.state == .connecting(peripheralID: "TARGET"))
         #expect(matched.contains(.connect(peripheralID: "TARGET")))
     }
 
     @Test("powered off before ready fails typed")
     func poweredOffDuringSetup() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
         let actions = machine.handle(.poweredOff)
@@ -99,7 +99,7 @@ struct BLEStateMachineTests {
 
     @Test("unauthorized fails typed")
     func unauthorized() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         let actions = machine.handle(.unauthorized)
         #expect(machine.state == .failed)
@@ -108,7 +108,7 @@ struct BLEStateMachineTests {
 
     @Test("missing service fails typed")
     func missingService() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
         _ = machine.handle(.discovered(peripheral))
@@ -120,7 +120,7 @@ struct BLEStateMachineTests {
 
     @Test("missing notify characteristic fails typed")
     func missingCharacteristic() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
         _ = machine.handle(.discovered(peripheral))
@@ -138,7 +138,7 @@ struct BLEStateMachineTests {
 
     @Test("connect failure fails typed")
     func connectFailure() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
         _ = machine.handle(.discovered(peripheral))
@@ -157,7 +157,7 @@ struct BLEStateMachineTests {
 
     @Test("timeout before ready fails typed, after ready is ignored")
     func timeout() {
-        var connecting = BLEConnectionStateMachine(profile: profile)
+        var connecting = ConnectionStateMachine(profile: profile)
         _ = connecting.handle(.start)
         _ = connecting.handle(.poweredOn)
         let actions = connecting.handle(.timedOut)
@@ -171,7 +171,7 @@ struct BLEStateMachineTests {
 
     @Test("events after failure are inert")
     func inertAfterFailure() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.unauthorized)
         #expect(machine.handle(.poweredOn).isEmpty)
@@ -181,7 +181,7 @@ struct BLEStateMachineTests {
 
     @Test("a stray disconnect for another peripheral is ignored during scan")
     func strayDisconnect() {
-        var machine = BLEConnectionStateMachine(profile: profile)
+        var machine = ConnectionStateMachine(profile: profile)
         _ = machine.handle(.start)
         _ = machine.handle(.poweredOn)
         #expect(machine.handle(.disconnected(peripheralID: "SOMEONE-ELSE", error: nil)).isEmpty)

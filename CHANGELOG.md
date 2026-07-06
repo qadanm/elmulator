@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims
 to follow semantic versioning.
 
+## [0.3.0] - 2026-07-06
+
+Developer-experience release. Everything is additive except the BLE type rename, which ships with deprecated aliases so existing code keeps compiling.
+
+### Added
+- Test client. `ElmulatorTestSupport` ships an in-process `Conversation` and a socket `Client` (Swift); the Python package adds `Conversation`, `Client`, and `serve_in_background`. Driving the emulator is a few lines instead of a hand-rolled socket loop.
+- Bundled scenarios by name: `Scenario.bundled("p0420_basic")` and `Scenario.bundledNames` (Swift), `elmulator.load_bundled(...)` and `bundled_names()` (Python). Embedded in the package, so no files on disk are needed. `elmulator serve` and the new GitHub Action accept a bundled name.
+- Served-conversation transcript: opt in with `EngineConfiguration.recordTranscript` and read `transcript` from the engine, `TCPServer`, `FakeCentral`, or `ElmulatorMockPeripheral`; `TranscriptEntry.debugDump()` prints a byte-level line.
+- In-code scenario builders: public memberwise initializers on `Scenario`, `Command`, `Defaults`, and `ExpectedScanSummary`, plus `Scenario(id:commands:)` (Swift) and `build_scenario(...)` (Python).
+- `expected_scan_summary` helper: `ExpectedScanSummary.mismatches(observed:)` (Swift) and `summary_mismatches(expected, observed)` (Python) diff a consumer-decoded scan against the scenario's expectations.
+- A reusable GitHub Action (`action.yml`) that installs elmulator and serves a scenario over TCP, exposing the bound port.
+
+### Changed
+- BLE types dropped the `BLE` prefix (the `ElmulatorBLE` module already namespaces them), so they no longer collide with a consuming app's own BLE layer: `BLEStack` -> `CentralStack`, `BLEConnectionStateMachine` -> `ConnectionStateMachine`, `BLEAdapterProfile` -> `AdapterProfile`, `BLEDiscoveredPeripheral` -> `DiscoveredPeripheral`, `BLEStackEvent` -> `CentralEvent`, `BLEConnectionEvent` -> `ConnectionEvent`, `BLEConnectionAction` -> `ConnectionAction`, `BLETransportError` -> `ConnectionError`, `FakeBLEStack` -> `FakeCentral`. Deprecated typealiases keep the old names working for now.
+
+### Fixed
+- The CoreBluetooth-Mock bridge can honor per-piece reply delays (opt in with `applyDelays: true`), so timeout paths are reachable through BLE.
+- `elmulator validate` with no arguments now works from a pip-installed wheel (it validates the embedded scenarios rather than a repo-root path that is not shipped).
+
 ## [0.2.0] - 2026-07-06
 
 ### Changed

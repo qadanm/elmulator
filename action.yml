@@ -1,0 +1,46 @@
+name: "elmulator serve"
+description: "Start a scriptable ELM327 OBD2 adapter emulator over TCP and expose its bound port."
+branding:
+  icon: "cpu"
+  color: "blue"
+inputs:
+  scenario:
+    description: "A .scenario.json path, or a bundled scenario name (for example p0420_basic)."
+    required: true
+  port:
+    description: "TCP port to bind (0 picks a free port)."
+    required: false
+    default: "0"
+  version:
+    description: "elmulator version spec for pip (for example ==0.3.0). Empty installs the latest."
+    required: false
+    default: ""
+outputs:
+  port:
+    description: "The bound TCP port. Point your app's transport at 127.0.0.1:<port>."
+    value: ${{ steps.serve.outputs.port }}
+runs:
+  using: composite
+  steps:
+    - name: Install elmulator
+      shell: bash
+      run: python3 -m pip install --upgrade "elmulator${{ inputs.version }}"
+    - name: Start elmulator serve
+      id: serve
+      shell: bash
+      run: |
+        python3 -m elmulator serve "${{ inputs.scenario }}" \
+          --host 127.0.0.1 --port "${{ inputs.port }}" > elmulator.out 2> elmulator.err &
+        for _ in $(seq 1 50); do
+          line=$(grep -m1 '^LISTENING ' elmulator.out || true)
+          if [ -n "$line" ]; then
+            port=$(echo "$line" | awk '{print $2}')
+            echo "port=$port" >> "$GITHUB_OUTPUT"
+            echo "elmulator listening on 127.0.0.1:$port"
+            exit 0
+          fi
+          sleep 0.2
+        done
+        echo "elmulator did not report a port within 10s" >&2
+        cat elmulator.err >&2 || true
+        exit 1

@@ -18,11 +18,16 @@ public actor TCPServer {
     private var connections: [NWConnection] = []
     private var handlerTasks: [Task<Void, Never>] = []
     private let queue = DispatchQueue(label: "obd2.fakeelm.server")
+    private var lastTranscript: [TranscriptEntry] = []
 
     public init(scenario: Scenario, configuration: EngineConfiguration = .init()) {
         self.scenario = scenario
         self.configuration = configuration
     }
+
+    /// The transcript of the most recent connection, when the engine
+    /// configuration has `recordTranscript` on. Empty otherwise.
+    public func transcript() -> [TranscriptEntry] { lastTranscript }
 
     /// Starts listening on 127.0.0.1. Port 0 picks an ephemeral port.
     /// Returns the bound port.
@@ -100,6 +105,7 @@ public actor TCPServer {
                     while let line = Self.takeLine(from: &buffer) {
                         guard !line.isEmpty else { continue }
                         let plan = engine.plan(for: line)
+                        if configuration.recordTranscript { lastTranscript = engine.transcript }
                         for piece in plan.pieces {
                             if piece.delayMS > 0 {
                                 try await Task.sleep(for: .milliseconds(piece.delayMS))

@@ -42,16 +42,16 @@ import ElmulatorBLE
 import ElmulatorBLETestSupport
 
 let scenario = try Scenario.load(from: url)
-let stack: any BLEStack = FakeBLEStack(scenario: scenario)   // in-process fake central
+let stack: any CentralStack = FakeCentral(scenario: scenario)   // in-process fake central
 // In production you'd instead write:  let stack = makeCoreBluetoothStack()
 
-// Your production code targets the `BLEStack` protocol and (optionally) the
-// pure `BLEConnectionStateMachine`, so the exact same code runs against the
+// Your production code targets the `CentralStack` protocol and (optionally) the
+// pure `ConnectionStateMachine`, so the exact same code runs against the
 // fake here and the real radio in the app. Assert on the bytes you receive
 // and on the scenario's expected_scan_summary.
 ```
 
-`FakeBLEStack` emits the same event order a real CoreBluetooth central reports (power on, discover, connect, services, characteristics, notify), chunks replies to a notify-sized limit (default 20 bytes) like real BLE, and honors scenario stall and disconnect. Options: `profile:`, `configuration:`, `notifyChunkSize:`, `powerMode:`.
+`FakeCentral` emits the same event order a real CoreBluetooth central reports (power on, discover, connect, services, characteristics, notify), chunks replies to a notify-sized limit (default 20 bytes) like real BLE, and honors scenario stall and disconnect. Options: `profile:`, `configuration:`, `notifyChunkSize:`, `powerMode:`.
 
 ## 3. A real Bluetooth peripheral (macOS)
 

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A peripheral the central found while scanning.
-public struct BLEDiscoveredPeripheral: Sendable, Equatable {
+public struct DiscoveredPeripheral: Sendable, Equatable {
     public let id: String
     public let name: String?
 
@@ -12,15 +12,15 @@ public struct BLEDiscoveredPeripheral: Sendable, Equatable {
 }
 
 /// Inputs to the connection state machine. These mirror the CoreBluetooth
-/// callbacks the BLEStack reports, plus a `start` kick and a `timedOut`
+/// callbacks the CentralStack reports, plus a `start` kick and a `timedOut`
 /// signal the transport raises on its own deadline.
-public enum BLEConnectionEvent: Sendable, Equatable {
+public enum ConnectionEvent: Sendable, Equatable {
     case start
     case poweredOn
     case poweredOff
     case unauthorized
     case unsupported
-    case discovered(BLEDiscoveredPeripheral)
+    case discovered(DiscoveredPeripheral)
     case connected(peripheralID: String)
     case connectFailed(peripheralID: String, message: String)
     case servicesDiscovered(peripheralID: String, serviceUUIDs: [String], error: String?)
@@ -32,7 +32,7 @@ public enum BLEConnectionEvent: Sendable, Equatable {
 
 /// Side effects the machine asks the transport to perform. Pure data, so
 /// the whole sequencing is testable without CoreBluetooth.
-public enum BLEConnectionAction: Sendable, Equatable {
+public enum ConnectionAction: Sendable, Equatable {
     case scan(serviceUUIDs: [String])
     case stopScan
     case connect(peripheralID: String)
@@ -40,7 +40,7 @@ public enum BLEConnectionAction: Sendable, Equatable {
     case discoverCharacteristics([String], serviceUUID: String, peripheralID: String)
     case setNotify(Bool, characteristicUUID: String, serviceUUID: String, peripheralID: String)
     case becameReady(peripheralID: String)
-    case fail(BLETransportError)
+    case fail(ConnectionError)
 }
 
 /// Drives one adapter connection from power-on through ready, in the fixed
@@ -50,7 +50,7 @@ public enum BLEConnectionAction: Sendable, Equatable {
 ///
 /// The machine is pure: `handle` returns the actions to run and mutates
 /// only its own state. The transport owns all I/O and timers.
-public struct BLEConnectionStateMachine: Sendable {
+public struct ConnectionStateMachine: Sendable {
     public enum State: Sendable, Equatable {
         case idle
         case waitingForPowerOn
@@ -64,16 +64,16 @@ public struct BLEConnectionStateMachine: Sendable {
     }
 
     public private(set) var state: State = .idle
-    private let profile: BLEAdapterProfile
+    private let profile: AdapterProfile
     /// When set, only connect to a peripheral whose id or name matches.
     private let peripheralMatch: String?
 
-    public init(profile: BLEAdapterProfile, peripheralMatch: String? = nil) {
+    public init(profile: AdapterProfile, peripheralMatch: String? = nil) {
         self.profile = profile
         self.peripheralMatch = peripheralMatch
     }
 
-    private func matches(_ peripheral: BLEDiscoveredPeripheral) -> Bool {
+    private func matches(_ peripheral: DiscoveredPeripheral) -> Bool {
         guard let peripheralMatch, !peripheralMatch.isEmpty else { return true }
         if peripheral.id.caseInsensitiveCompare(peripheralMatch) == .orderedSame { return true }
         if let name = peripheral.name, name.localizedCaseInsensitiveContains(peripheralMatch) { return true }
@@ -84,7 +84,7 @@ public struct BLEConnectionStateMachine: Sendable {
         lhs.caseInsensitiveCompare(rhs) == .orderedSame
     }
 
-    public mutating func handle(_ event: BLEConnectionEvent) -> [BLEConnectionAction] {
+    public mutating func handle(_ event: ConnectionEvent) -> [ConnectionAction] {
         switch (state, event) {
         case (.idle, .start):
             state = .waitingForPowerOn

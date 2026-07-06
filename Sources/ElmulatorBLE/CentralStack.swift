@@ -4,12 +4,12 @@ import Foundation
 /// machine's events, plus incoming notifications. Defining them as plain
 /// data is what lets BLETransportClient be tested without a radio: a fake
 /// stack emits the same events a real CoreBluetooth central would.
-public enum BLEStackEvent: Sendable {
+public enum CentralEvent: Sendable {
     case poweredOn
     case poweredOff
     case unauthorized
     case unsupported
-    case discovered(BLEDiscoveredPeripheral)
+    case discovered(DiscoveredPeripheral)
     case connected(peripheralID: String)
     case connectFailed(peripheralID: String, message: String)
     case servicesDiscovered(peripheralID: String, serviceUUIDs: [String], error: String?)
@@ -24,8 +24,8 @@ public enum BLEStackEvent: Sendable {
 /// test implementation drives a FakeELM peripheral in-process. Events are
 /// delivered in order through a single AsyncStream so the transport
 /// processes them exactly as CoreBluetooth reported them.
-public protocol BLEStack: Sendable {
-    func events() -> AsyncStream<BLEStackEvent>
+public protocol CentralStack: Sendable {
+    func events() -> AsyncStream<CentralEvent>
     func scan(serviceUUIDs: [String]) async
     func stopScan() async
     func connect(peripheralID: String) async

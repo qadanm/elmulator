@@ -80,8 +80,22 @@ class EngineState:
         self.args = args
         self.cursors = {}
         self.random = SplitMix64(args.seed)
+        self.transcript = []
 
     def plan(self, raw_command: str):
+        result = self._make_plan(raw_command)
+        if getattr(self.args, "record", False):
+            pieces, _delay, action, matched = result
+            self.transcript.append({
+                "raw_command": raw_command,
+                "normalized": normalize(raw_command),
+                "matched_request": matched,
+                "reply": "".join(pieces),
+                "post_action": action,
+            })
+        return result
+
+    def _make_plan(self, raw_command: str):
         normalized = normalize(raw_command)
         entries = [
             command for command in self.scenario.commands
@@ -225,9 +239,18 @@ def serve(args, scenario: Scenario, ready_event=None, stop_event=None):
 
 
 def run_serve(args) -> int:
-    """Entry point used by the `elmulator serve` CLI subcommand."""
+    """Entry point used by the `elmulator serve` CLI subcommand. `args.scenario`
+    can be a file path or the name of a bundled example scenario."""
+    path = Path(args.scenario)
     try:
-        scenario = Scenario.from_path(Path(args.scenario))
+        if path.exists():
+            scenario = Scenario.from_path(path)
+        else:
+            from ._bundled import BUNDLED
+            if args.scenario not in BUNDLED:
+                log(f"scenario not found: {args.scenario!r} (not a file, not a bundled name)")
+                return 2
+            scenario = Scenario(json.loads(BUNDLED[args.scenario]))
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
         log(f"scenario load failed: {error}")
         return 2

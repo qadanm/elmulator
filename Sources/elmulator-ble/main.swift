@@ -51,8 +51,8 @@ func parseArguments(_ arguments: [String]) -> (scenarioPath: String, options: Pe
 
     guard let scenarioPath = values["--scenario"] else { fail("--scenario is required") }
 
-    let base = BLEAdapterProfile.nordicUART
-    let profile = BLEAdapterProfile(
+    let base = AdapterProfile.nordicUART
+    let profile = AdapterProfile(
         serviceUUID: values["--service"] ?? base.serviceUUID,
         writeCharacteristicUUID: values["--write-uuid"] ?? base.writeCharacteristicUUID,
         notifyCharacteristicUUID: values["--notify-uuid"] ?? base.notifyCharacteristicUUID,

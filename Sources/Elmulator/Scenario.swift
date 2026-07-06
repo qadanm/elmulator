@@ -2,14 +2,22 @@ import Foundation
 
 /// A repo-owned simulator scenario (schema obd2.sim_scenario.v1).
 ///
-/// Scenarios are hand-authored synthetic fixtures under
-/// Fixtures/sim_scenarios and are validated by Scripts/sim/validate_scenarios.py.
-/// No scenario content is copied from third-party simulators; the byte
+/// Scenarios are hand-authored synthetic fixtures under `scenarios/` and are
+/// validated by the `elmulator validate` command and the JSON Schema in
+/// `spec/`. No scenario content is copied from third-party simulators; the byte
 /// patterns mirror this repo's own replay traces.
-public struct Scenario: Codable, Sendable {
-    public struct Defaults: Codable, Sendable {
+///
+/// Load one from a file with `load(from:)`, from the bundled set by name with
+/// `bundled(_:)`, or build one in code with the memberwise initializers.
+public struct Scenario: Codable, Sendable, Equatable {
+    public struct Defaults: Codable, Sendable, Equatable {
         public let atResponse: String
         public let obdResponse: String
+
+        public init(atResponse: String = "OK\r\r>", obdResponse: String = "NO DATA\r\r>") {
+            self.atResponse = atResponse
+            self.obdResponse = obdResponse
+        }
 
         enum CodingKeys: String, CodingKey {
             case atResponse = "at_response"
@@ -25,7 +33,7 @@ public struct Scenario: Codable, Sendable {
         case disconnect
     }
 
-    public struct Command: Codable, Sendable {
+    public struct Command: Codable, Sendable, Equatable {
         public let request: String
         public let responseChunks: [String]
         public let delayMS: Int
@@ -36,6 +44,24 @@ public struct Scenario: Codable, Sendable {
         /// consumed. The last matching entry also repeats by default so
         /// repeated polling (live data later) keeps working.
         public let repeats: Bool
+
+        public init(
+            request: String,
+            responseChunks: [String],
+            delayMS: Int = 0,
+            echo: Bool = false,
+            prompt: Bool = true,
+            postAction: PostAction = .none,
+            repeats: Bool = false
+        ) {
+            self.request = request
+            self.responseChunks = responseChunks
+            self.delayMS = delayMS
+            self.echo = echo
+            self.prompt = prompt
+            self.postAction = postAction
+            self.repeats = repeats
+        }
 
         enum CodingKeys: String, CodingKey {
             case request
@@ -61,7 +87,11 @@ public struct Scenario: Codable, Sendable {
 
     /// Expected full-scan outcome, asserted by integration tests so every
     /// scenario is a self-describing oracle.
-    public struct ExpectedScanSummary: Codable, Sendable {
+    ///
+    /// elmulator does not decode OBD2, so it never fills these in. The fields
+    /// are the consuming app's own interpretation of a scan. Use
+    /// `mismatches(observed:)` to diff your decoded values against them.
+    public struct ExpectedScanSummary: Codable, Sendable, Equatable {
         public let storedCodes: [String]?
         public let pendingCodes: [String]?
         public let permanentCodes: [String]?
@@ -71,6 +101,28 @@ public struct Scenario: Codable, Sendable {
         public let minSessionWarnings: Int?
         public let noStoredCodesObservation: Bool?
         public let scanError: String?
+
+        public init(
+            storedCodes: [String]? = nil,
+            pendingCodes: [String]? = nil,
+            permanentCodes: [String]? = nil,
+            milReportedOn: Bool? = nil,
+            vinReported: Bool? = nil,
+            liveValueCount: Int? = nil,
+            minSessionWarnings: Int? = nil,
+            noStoredCodesObservation: Bool? = nil,
+            scanError: String? = nil
+        ) {
+            self.storedCodes = storedCodes
+            self.pendingCodes = pendingCodes
+            self.permanentCodes = permanentCodes
+            self.milReportedOn = milReportedOn
+            self.vinReported = vinReported
+            self.liveValueCount = liveValueCount
+            self.minSessionWarnings = minSessionWarnings
+            self.noStoredCodesObservation = noStoredCodesObservation
+            self.scanError = scanError
+        }
 
         enum CodingKeys: String, CodingKey {
             case storedCodes = "stored_codes"
@@ -96,6 +148,35 @@ public struct Scenario: Codable, Sendable {
     public let commands: [Command]
     public let expectedScanSummary: ExpectedScanSummary
 
+    public init(
+        scenarioID: String,
+        description: String = "",
+        adapterProfile: String = "elm327_like_tcp",
+        defaults: Defaults = Defaults(),
+        streamSplitBytes: Int? = nil,
+        warnings: [String] = [],
+        commands: [Command],
+        expectedScanSummary: ExpectedScanSummary = ExpectedScanSummary(),
+        schemaVersion: String = "obd2.sim_scenario.v1",
+        synthetic: Bool = true
+    ) {
+        self.schemaVersion = schemaVersion
+        self.scenarioID = scenarioID
+        self.synthetic = synthetic
+        self.description = description
+        self.adapterProfile = adapterProfile
+        self.defaults = defaults
+        self.streamSplitBytes = streamSplitBytes
+        self.warnings = warnings
+        self.commands = commands
+        self.expectedScanSummary = expectedScanSummary
+    }
+
+    /// Convenience for the common case: an id and a list of commands.
+    public init(id: String, commands: [Command]) {
+        self.init(scenarioID: id, commands: commands)
+    }
+
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
         case scenarioID = "scenario_id"
@@ -112,10 +193,17 @@ public struct Scenario: Codable, Sendable {
     public enum LoadError: Error, Equatable, Sendable {
         case unsupportedSchema(String)
         case notSynthetic(String)
+        case unknownBundled(String)
     }
 
     public static func load(from url: URL) throws -> Scenario {
-        let scenario = try JSONDecoder().decode(Scenario.self, from: try Data(contentsOf: url))
+        try decode(from: try Data(contentsOf: url))
+    }
+
+    /// Decode and validate a scenario from raw JSON. Shared by `load(from:)`
+    /// and `bundled(_:)`.
+    static func decode(from data: Data) throws -> Scenario {
+        let scenario = try JSONDecoder().decode(Scenario.self, from: data)
         guard scenario.schemaVersion == "obd2.sim_scenario.v1" else {
             throw LoadError.unsupportedSchema(scenario.schemaVersion)
         }

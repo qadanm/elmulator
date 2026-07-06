@@ -118,18 +118,42 @@ def _collect(paths) -> list:
     return files
 
 
+def _validate_bundled() -> int:
+    import tempfile
+
+    from ._bundled import BUNDLED
+
+    if not BUNDLED:
+        print("FAIL: no scenario paths given and no bundled examples found")
+        return 1
+    problems = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, text in sorted(BUNDLED.items()):
+            path = Path(tmp) / f"{name}.scenario.json"
+            path.write_text(text, encoding="utf-8")
+            problems.extend(validate(path))
+    if problems:
+        for problem in problems:
+            print(f"SCENARIO VALIDATION: {problem}")
+        print(f"FAIL: {len(problems)} problem(s)")
+        return 1
+    print(f"OK: {len(BUNDLED)} bundled scenario(s) validated")
+    return 0
+
+
 def run(paths=None) -> int:
     """Entry point used by the `elmulator validate` CLI subcommand.
 
-    With no paths, validates the bundled example library (repo checkout).
+    With no paths, validates the bundled example scenarios.
     """
     if paths:
         files = _collect(paths)
     else:
         files = sorted(BUNDLED_SCENARIOS.glob("*.scenario.json"))
         if not files:
-            print("FAIL: no scenario paths given and no bundled examples found")
-            return 1
+            # Installed wheel: the repo-root scenarios/ is not shipped, so
+            # validate the embedded bundled scenarios instead.
+            return _validate_bundled()
 
     if not files:
         print("FAIL: no scenario files found")

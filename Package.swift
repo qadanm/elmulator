@@ -9,6 +9,9 @@ let package = Package(
         .library(name: "Elmulator", targets: ["Elmulator"]),
         // Localhost TCP host for a scenario (in-process, for tests).
         .library(name: "ElmulatorTCP", targets: ["ElmulatorTCP"]),
+        // Test helpers: an in-process Conversation and a TCP Client that
+        // drive the emulator in a few lines.
+        .library(name: "ElmulatorTestSupport", targets: ["ElmulatorTestSupport"]),
         // BLE transport kit: GATT profile, connection state machine,
         // BLEStack protocol, and the real CoreBluetooth central.
         .library(name: "ElmulatorBLE", targets: ["ElmulatorBLE"]),
@@ -33,6 +36,7 @@ let package = Package(
     targets: [
         .target(name: "Elmulator"),
         .target(name: "ElmulatorTCP", dependencies: ["Elmulator"]),
+        .target(name: "ElmulatorTestSupport", dependencies: ["Elmulator"]),
         .target(name: "ElmulatorBLE"),
         .target(
             name: "ElmulatorBLETestSupport",
@@ -66,7 +70,7 @@ let package = Package(
         ),
         .testTarget(
             name: "ElmulatorTests",
-            dependencies: ["Elmulator", "ElmulatorTCP"]
+            dependencies: ["Elmulator", "ElmulatorTCP", "ElmulatorTestSupport"]
         ),
         .testTarget(
             name: "ElmulatorBLETests",

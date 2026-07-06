@@ -3,7 +3,7 @@
 ## Where things stand
 
 - Language-neutral today. The TCP server (`elmulator serve` / `elmulator-tcp`) and the JSON scenario format work for any app in any language, since anything can open a socket.
-- Swift gets the most. On top of TCP, Swift has the in-process BLE test double (`FakeBLEStack`), the pure connection state machine, the real CoreBluetooth central, and a real BLE peripheral executable.
+- Swift gets the most. On top of TCP, Swift has the in-process BLE test double (`FakeCentral`), the pure connection state machine, the real CoreBluetooth central, and a real BLE peripheral executable.
 - Provable parity. The [conformance suite](../conformance/) holds every implementation to byte-for-byte agreement on the scenario format.
 
 ## Going wider (in priority order)

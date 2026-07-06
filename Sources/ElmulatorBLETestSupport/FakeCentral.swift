@@ -2,7 +2,7 @@ import Elmulator
 import ElmulatorBLE
 import Foundation
 
-/// A `BLEStack` that hosts a scenario in-process, so a full scan can run
+/// A `CentralStack` that hosts a scenario in-process, so a full scan can run
 /// through your production Bluetooth code with no Bluetooth radio. It emits
 /// the same event sequence a real CoreBluetooth central reports, chunks
 /// replies to a notify-sized limit like real BLE notifications, and honors
@@ -10,7 +10,7 @@ import Foundation
 ///
 /// Swap this in wherever you would use `makeCoreBluetoothStack()` to test the
 /// whole connect → discover → subscribe → write → notify flow deterministically.
-public actor FakeBLEStack: BLEStack {
+public actor FakeCentral: CentralStack {
     public enum PowerMode: Sendable {
         case poweredOn
         case neverPowersOn
@@ -18,19 +18,19 @@ public actor FakeBLEStack: BLEStack {
     }
 
     private let scenario: Scenario
-    private let profile: BLEAdapterProfile
+    private let profile: AdapterProfile
     private let notifyChunkSize: Int
     private let powerMode: PowerMode
     private let peripheralID: String
     private let peripheralName: String
     private var engine: ScenarioEngine
 
-    private let stream: AsyncStream<BLEStackEvent>
-    private let continuation: AsyncStream<BLEStackEvent>.Continuation
+    private let stream: AsyncStream<CentralEvent>
+    private let continuation: AsyncStream<CentralEvent>.Continuation
 
     public init(
         scenario: Scenario,
-        profile: BLEAdapterProfile = .fakeELM,
+        profile: AdapterProfile = .fakeELM,
         configuration: EngineConfiguration = .init(),
         notifyChunkSize: Int = 20,
         powerMode: PowerMode = .poweredOn,
@@ -44,7 +44,7 @@ public actor FakeBLEStack: BLEStack {
         self.peripheralID = peripheralID
         self.peripheralName = peripheralName
         self.engine = ScenarioEngine(scenario: scenario, configuration: configuration)
-        var storedContinuation: AsyncStream<BLEStackEvent>.Continuation!
+        var storedContinuation: AsyncStream<CentralEvent>.Continuation!
         self.stream = AsyncStream(bufferingPolicy: .unbounded) { storedContinuation = $0 }
         self.continuation = storedContinuation
         // Power state is reported first, exactly like CoreBluetooth.
@@ -55,11 +55,15 @@ public actor FakeBLEStack: BLEStack {
         }
     }
 
-    public nonisolated func events() -> AsyncStream<BLEStackEvent> { stream }
+    /// The transcript of the conversation served so far, when the engine
+    /// configuration has `recordTranscript` on. Empty otherwise.
+    public var transcript: [TranscriptEntry] { engine.transcript }
+
+    public nonisolated func events() -> AsyncStream<CentralEvent> { stream }
 
     public func scan(serviceUUIDs: [String]) async {
         guard powerMode == .poweredOn else { return }
-        continuation.yield(.discovered(BLEDiscoveredPeripheral(id: peripheralID, name: peripheralName)))
+        continuation.yield(.discovered(DiscoveredPeripheral(id: peripheralID, name: peripheralName)))
     }
 
     public func stopScan() async {}

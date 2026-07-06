@@ -10,7 +10,7 @@ import Foundation
 /// This is the bridge for the large majority of OBD2 apps that talk to
 /// `CBCentralManager`/`CBPeripheral` directly (via the drop-in `CBM*` types
 /// from [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock)),
-/// rather than adopting elmulator's own `BLEStack` protocol.
+/// rather than adopting elmulator's own `CentralStack` protocol.
 ///
 /// Usage in a test:
 /// ```swift
@@ -23,12 +23,18 @@ import Foundation
 /// CBMCentralManagerMock.tearDownSimulation()   // in tearDown
 /// ```
 public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
-    private let profile: BLEAdapterProfile
+    private let profile: AdapterProfile
     private let notifyChunkSize: Int
     private let advertisedName: String
+    private let applyDelays: Bool
+    private let deliveryQueue = DispatchQueue(label: "elmulator.mock.delivery")
     private var engine: ScenarioEngine
     private var inbound = ""
     private var notifyEnabled = false
+
+    /// The transcript of the conversation served so far, when the engine
+    /// configuration has `recordTranscript` on. Empty otherwise.
+    public var transcript: [TranscriptEntry] { engine.transcript }
 
     private let serviceUUID: CBMUUID
     private let writeUUID: CBMUUID
@@ -42,14 +48,16 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
 
     public init(
         scenario: Scenario,
-        profile: BLEAdapterProfile = .fakeELM,
+        profile: AdapterProfile = .fakeELM,
         configuration: EngineConfiguration = .init(),
         notifyChunkSize: Int = 20,
-        advertisedName: String? = nil
+        advertisedName: String? = nil,
+        applyDelays: Bool = false
     ) {
         self.profile = profile
         self.notifyChunkSize = notifyChunkSize
         self.advertisedName = advertisedName ?? profile.advertisedName
+        self.applyDelays = applyDelays
         self.engine = ScenarioEngine(scenario: scenario, configuration: configuration)
 
         let serviceUUID = CBMUUID(string: profile.serviceUUID)
@@ -151,16 +159,42 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
         inbound += String(decoding: data, as: UTF8.self)
         while let line = takeLine() {
             guard !line.isEmpty else { continue }
-            let plan = engine.plan(for: line)
-            for piece in plan.pieces {
-                // Real BLE delivers each reply across MTU-sized notifications;
-                // mimic that so the app's response assembler is exercised.
-                for chunk in Self.chunk(piece.bytes, size: notifyChunkSize) {
-                    peripheral.simulateValueUpdate(Data(chunk), for: notifyCharacteristic)
-                }
+            emit(engine.plan(for: line), on: peripheral)
+        }
+    }
+
+    private func emit(_ plan: ResponsePlan, on peripheral: CBMPeripheralSpec) {
+        // Real BLE delivers each reply across MTU-sized notifications; mimic
+        // that so the app's response assembler is exercised.
+        func send(_ piece: ResponsePlan.Piece) {
+            for chunk in Self.chunk(piece.bytes, size: notifyChunkSize) {
+                peripheral.simulateValueUpdate(Data(chunk), for: notifyCharacteristic)
             }
-            if plan.postAction == .disconnect {
-                peripheral.simulateDisconnection()
+        }
+
+        guard applyDelays else {
+            for piece in plan.pieces { send(piece) }
+            if plan.postAction == .disconnect { peripheral.simulateDisconnection() }
+            return
+        }
+
+        // Honor per-piece delays by scheduling cumulative emissions on our own
+        // queue. simulateValueUpdate routes delivery to the central's queue, so
+        // calling it from here is safe. Off by default so the common CI path
+        // stays fast; opt in with `applyDelays: true` to test timeout paths.
+        nonisolated(unsafe) let target = peripheral
+        nonisolated(unsafe) let characteristic = notifyCharacteristic
+        var cumulativeMS = 0
+        for piece in plan.pieces {
+            cumulativeMS += piece.delayMS
+            let chunks = Self.chunk(piece.bytes, size: notifyChunkSize).map { Data($0) }
+            deliveryQueue.asyncAfter(deadline: .now() + .milliseconds(cumulativeMS)) {
+                for chunk in chunks { target.simulateValueUpdate(chunk, for: characteristic) }
+            }
+        }
+        if plan.postAction == .disconnect {
+            deliveryQueue.asyncAfter(deadline: .now() + .milliseconds(cumulativeMS)) {
+                target.simulateDisconnection()
             }
         }
     }

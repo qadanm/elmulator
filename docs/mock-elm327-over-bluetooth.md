@@ -4,14 +4,14 @@ If you build an OBD2 app, it connects to an ELM327 adapter over Bluetooth, and s
 
 ## 1. In-process, no radio (Swift unit tests)
 
-If your app talks to Bluetooth through a protocol boundary, use `FakeBLEStack`. It stands in for the CoreBluetooth central, walks your connection flow, and answers commands from a scenario. Nothing touches a radio.
+If your app talks to Bluetooth through a protocol boundary, use `FakeCentral`. It stands in for the CoreBluetooth central, walks your connection flow, and answers commands from a scenario. Nothing touches a radio.
 
 ```swift
 import Elmulator
 import ElmulatorBLETestSupport
 
 let scenario = try Scenario.load(from: scenarioURL)
-let stack: any BLEStack = FakeBLEStack(scenario: scenario)
+let stack: any CentralStack = FakeCentral(scenario: scenario)
 // drive your production code against `stack`, then check the result
 ```
 

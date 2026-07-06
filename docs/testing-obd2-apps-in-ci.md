@@ -80,7 +80,7 @@ Each elmulator [scenario](../scenarios/) is a scripted conversation, so you can 
 
 You don't have to use CoreBluetooth-Mock:
 
-- If your app already abstracts its BLE stack behind a protocol, use elmulator's [`FakeBLEStack`](swift-package.md) (from `ElmulatorBLETestSupport`), an in-process fake central behind the `BLEStack` protocol, with no extra dependency.
+- If your app already abstracts its BLE stack behind a protocol, use elmulator's [`FakeCentral`](swift-package.md) (from `ElmulatorBLETestSupport`), an in-process fake central behind the `CentralStack` protocol, with no extra dependency.
 - If you connect over Wi-Fi or TCP (or you are on Android, React Native, or any other language), run `elmulator serve scenario.json --port 35000` and point your transport at the socket. See [getting started](getting-started.md).
 
 ## FAQ

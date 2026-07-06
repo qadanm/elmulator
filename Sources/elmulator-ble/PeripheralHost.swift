@@ -11,7 +11,7 @@ import Foundation
 /// Fixtures/sim_scenarios; no external emulator dictionaries are used.
 final class PeripheralHost: NSObject, @unchecked Sendable {
     struct Options {
-        var profile: BLEAdapterProfile
+        var profile: AdapterProfile
         var chunkSize: Int
         var configuration: EngineConfiguration
         var disconnectAfter: Int?

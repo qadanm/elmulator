@@ -41,7 +41,7 @@ Most OBD2 apps reach the car through a Bluetooth adapter, and that link is usual
 What it does:
 
 - A small macOS program advertises an ELM327-style GATT profile (Nordic UART by default), and your app connects to it over real Bluetooth. Nothing is mocked.
-- The same engine also sits behind a `BLEStack` protocol. In unit tests you swap the real CoreBluetooth central for the fake one and run the whole connection flow with no radio.
+- The same engine also sits behind a `CentralStack` protocol. In unit tests you swap the real CoreBluetooth central for the fake one and run the whole connection flow with no radio.
 - If your app already uses CoreBluetooth directly, there is a bridge to Nordic's [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock). It turns a scenario into a mock BLE peripheral, so your existing `CBCentralManager` code runs against a scripted ELM327 under `swift test`. The [iOS CI guide](docs/testing-obd2-apps-in-ci.md) walks through it.
 - One command serves a scenario over plain TCP, which covers the Simulator, Android, and anything else that can open a socket.
 - A scenario is just JSON. You write what the adapter replies, how it splits the reply into chunks, how long it waits, and when it stalls, drops the connection, or sends back garbage. Each file also records the scan result it should produce, so it works as a regression fixture.
@@ -74,9 +74,9 @@ import ElmulatorBLETestSupport
 
 // A scripted adapter, running as an in-process BLE central.
 let scenario = try Scenario.load(from: scenarioURL)
-let stack: any BLEStack = FakeBLEStack(scenario: scenario)   // no Bluetooth radio
+let stack: any CentralStack = FakeCentral(scenario: scenario)   // no Bluetooth radio
 
-// Your production Bluetooth code targets this same `BLEStack` protocol (the
+// Your production Bluetooth code targets this same `CentralStack` protocol (the
 // real CoreBluetooth central implements it too), so drive it here and check
 // the result against the scenario's expected_scan_summary. For the real
 // central, use makeCoreBluetoothStack() instead.
@@ -114,10 +114,11 @@ try await client.connect()
 |---|---|---|
 | Scenario engine | `Elmulator` (Swift), `elmulator` (Python) | the request/reply engine: matching, echo, defaults, chunking, seeded jitter, stalls, disconnects |
 | TCP server | `ElmulatorTCP` in-process, or the `elmulator-tcp` / `elmulator serve` CLI | serves a scenario over localhost TCP |
-| BLE test double | `ElmulatorBLETestSupport` (`FakeBLEStack`) | in-process fake central for CI, behind the `BLEStack` protocol |
+| Test client | `ElmulatorTestSupport` (`Conversation`, `Client`), and the Python `Conversation` / `Client` | drive the emulator in a few lines, in-process or over TCP |
+| BLE test double | `ElmulatorBLETestSupport` (`FakeCentral`) | in-process fake central for CI, behind the `CentralStack` protocol |
 | CoreBluetooth-Mock bridge | `ElmulatorCoreBluetoothMock` (`ElmulatorMockPeripheral`) | turns a scenario into a mock BLE peripheral so your real CoreBluetooth code runs in CI |
 | BLE peripheral | `elmulator-ble` (macOS) | real CoreBluetooth peripheral advertising an ELM327 GATT profile |
-| BLE transport kit | `ElmulatorBLE` | GATT profile, connection state machine, `BLEStack` protocol, real central |
+| BLE transport kit | `ElmulatorBLE` | GATT profile, connection state machine, `CentralStack` protocol, real central |
 | Scenario format | [`SPEC.md`](SPEC.md) and [`spec/`](spec/) | the `obd2.sim_scenario.v1` contract and its JSON Schema |
 | Example library | [`scenarios/`](scenarios/) | seven scenarios, each doubling as a regression fixture |
 | Conformance suite | [`conformance/`](conformance/) | byte-for-byte parity across implementations |

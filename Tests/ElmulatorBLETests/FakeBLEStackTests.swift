@@ -6,7 +6,7 @@ import Testing
 
 /// Locate the repo's `scenarios/` directory relative to this source file.
 private func scenarioURL(_ name: String) -> URL {
-    URL(filePath: #filePath)            // .../Tests/ElmulatorBLETests/FakeBLEStackTests.swift
+    URL(filePath: #filePath)            // .../Tests/ElmulatorBLETests/FakeCentralTests.swift
         .deletingLastPathComponent()    // ElmulatorBLETests
         .deletingLastPathComponent()    // Tests
         .deletingLastPathComponent()    // repo root
@@ -17,7 +17,7 @@ private func scenarioURL(_ name: String) -> URL {
 /// Collects notification payloads from the stack until it sees the ELM prompt
 /// (`>`) or the stream ends, reassembling MTU-sized chunks the way a real
 /// client's response assembler would.
-private func drainReply(_ stack: FakeBLEStack, profile: BLEAdapterProfile) async -> String {
+private func drainReply(_ stack: FakeCentral, profile: AdapterProfile) async -> String {
     var assembled = ""
     for await event in stack.events() {
         if case let .notification(_, _, data) = event {
@@ -29,14 +29,14 @@ private func drainReply(_ stack: FakeBLEStack, profile: BLEAdapterProfile) async
     return assembled
 }
 
-@Suite("FakeBLEStack in-process central")
-struct FakeBLEStackTests {
-    let profile = BLEAdapterProfile.fakeELM
+@Suite("FakeCentral in-process central")
+struct FakeCentralTests {
+    let profile = AdapterProfile.fakeELM
 
     @Test("emits the CoreBluetooth event sequence up to notify-ready")
     func handshakeSequence() async throws {
         let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))
-        let stack = FakeBLEStack(scenario: scenario)
+        let stack = FakeCentral(scenario: scenario)
         defer { Task { await stack.stop() } }
 
         let collector = Task { () -> [String] in
@@ -76,7 +76,7 @@ struct FakeBLEStackTests {
     @Test("a written command comes back reassembled across notifications")
     func writeRoundTrip() async throws {
         let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))
-        let stack = FakeBLEStack(scenario: scenario)
+        let stack = FakeCentral(scenario: scenario)
         defer { Task { await stack.stop() } }
 
         // The reply arrives in 20-byte notifications; the assembler stitches it.

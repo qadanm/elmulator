@@ -7,7 +7,7 @@ import Foundation
 /// be verified against the real adapters on hand before they are frozen
 /// (Docs/testing/FAKE_BLE_PERIPHERAL.md). The FakeELMBLEPeripheral tool and
 /// BLETransportClient share this type so both sides of a test agree.
-public struct BLEAdapterProfile: Sendable, Equatable {
+public struct AdapterProfile: Sendable, Equatable {
     /// Advertised service that carries the command and response
     /// characteristics.
     public let serviceUUID: String
@@ -39,7 +39,7 @@ public struct BLEAdapterProfile: Sendable, Equatable {
     /// A Nordic UART style profile. Common on ELM327 BLE clones, but not
     /// universal, so treat this as a starting point, not a guarantee.
     /// Verify against the real adapters at bring-up.
-    public static let nordicUART = BLEAdapterProfile(
+    public static let nordicUART = AdapterProfile(
         serviceUUID: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E",
         writeCharacteristicUUID: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E",
         notifyCharacteristicUUID: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E",
@@ -50,5 +50,5 @@ public struct BLEAdapterProfile: Sendable, Equatable {
     /// The profile the FakeELMBLEPeripheral tool advertises by default. Same
     /// UUIDs as `nordicUART`; named so tests and the tool reference one
     /// source of truth.
-    public static let fakeELM = BLEAdapterProfile.nordicUART
+    public static let fakeELM = AdapterProfile.nordicUART
 }

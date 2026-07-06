@@ -4,32 +4,32 @@ import Foundation
 /// Builds the real central-role BLE stack backed by CoreBluetooth.
 ///
 /// Use this to drive your production Bluetooth path against a real adapter,
-/// then swap in `FakeBLEStack` (from ElmulatorBLETestSupport) to drive the
+/// then swap in `FakeCentral` (from ElmulatorBLETestSupport) to drive the
 /// exact same code against a scripted scenario with no radio.
-public func makeCoreBluetoothStack() -> any BLEStack {
+public func makeCoreBluetoothStack() -> any CentralStack {
     CoreBluetoothStack()
 }
 
 /// The real central-role BLE stack, wrapping CoreBluetooth. It confines all
 /// CoreBluetooth access to a single serial queue and translates delegate
-/// callbacks into BLEStackEvent values. It holds no orchestration logic:
+/// callbacks into CentralEvent values. It holds no orchestration logic:
 /// the transport's state machine decides what to do next.
 ///
 /// This type cannot be exercised without a Bluetooth radio, so it is kept
 /// deliberately thin. Its orchestration is proven through the state machine
 /// tests and the fake-stack integration test; a real handshake is verified
 /// on a physical iPhone (Docs/testing/MACBOOK_ONLY_TESTING.md).
-final class CoreBluetoothStack: NSObject, BLEStack, @unchecked Sendable {
+final class CoreBluetoothStack: NSObject, CentralStack, @unchecked Sendable {
     private let queue = DispatchQueue(label: "obd2.ble.central")
     private var central: CBCentralManager?
-    private let continuation: AsyncStream<BLEStackEvent>.Continuation
-    private let stream: AsyncStream<BLEStackEvent>
+    private let continuation: AsyncStream<CentralEvent>.Continuation
+    private let stream: AsyncStream<CentralEvent>
 
     private var discovered: [String: CBPeripheral] = [:]
     private var characteristics: [String: CBCharacteristic] = [:]
 
     override init() {
-        var storedContinuation: AsyncStream<BLEStackEvent>.Continuation!
+        var storedContinuation: AsyncStream<CentralEvent>.Continuation!
         self.stream = AsyncStream(bufferingPolicy: .unbounded) { storedContinuation = $0 }
         self.continuation = storedContinuation
         super.init()
@@ -39,7 +39,7 @@ final class CoreBluetoothStack: NSObject, BLEStack, @unchecked Sendable {
         }
     }
 
-    func events() -> AsyncStream<BLEStackEvent> { stream }
+    func events() -> AsyncStream<CentralEvent> { stream }
 
     func scan(serviceUUIDs: [String]) async {
         queue.async { [weak self] in
@@ -131,7 +131,7 @@ extension CoreBluetoothStack: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         let id = peripheral.identifier.uuidString
         discovered[id] = peripheral
-        continuation.yield(.discovered(BLEDiscoveredPeripheral(id: id, name: peripheral.name)))
+        continuation.yield(.discovered(DiscoveredPeripheral(id: id, name: peripheral.name)))
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
