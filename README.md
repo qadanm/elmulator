@@ -43,7 +43,7 @@ What it does:
 - A small macOS program advertises an ELM327-style GATT profile (Nordic UART by default), and your app connects to it over real Bluetooth. Nothing is mocked.
 - The same engine also sits behind a `CentralStack` protocol. In unit tests you swap the real CoreBluetooth central for the fake one and run the whole connection flow with no radio.
 - If your app already uses CoreBluetooth directly, there is a bridge to Nordic's [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock). It turns a scenario into a mock BLE peripheral, so your existing `CBCentralManager` code runs against a scripted ELM327 under `swift test`. The [iOS CI guide](docs/testing-obd2-apps-in-ci.md) walks through it.
-- One command serves a scenario over plain TCP, which covers the Simulator, Android, and anything else that can open a socket.
+- One command serves a scenario over plain TCP, which covers the Simulator, Android, and anything else that can open a socket. There is a [GitHub Action](#run-it-in-github-actions) that does the same in one step.
 - A scenario is just JSON. You write what the adapter replies, how it splits the reply into chunks, how long it waits, and when it stalls, drops the connection, or sends back garbage. Each file also records the scan result it should produce, so it works as a regression fixture.
 - The Python and Swift servers are checked against each other byte for byte by a [conformance suite](conformance/), so a scenario behaves the same no matter which one you run.
 
@@ -51,11 +51,33 @@ The closest tool out there is [ELM327-emulator](https://github.com/Ircama/ELM327
 
 ## Quickstart
 
-### TCP (any language)
+The example scenarios ship inside the package, so every snippet below loads one by name (`p0420_basic`) with no files on disk. Swap in a path to a `.scenario.json` when you want your own.
+
+### In three lines, no app code
+
+Drive a scripted adapter in-process, with no sockets and no radio. This is the fastest way to see what a reply looks like or to assert on it in a test.
+
+```swift
+import ElmulatorTestSupport
+
+var adapter = try Conversation(bundled: "p0420_basic")
+_ = adapter.send("ATZ")
+#expect(adapter.send("03").contains("43 01 04 20"))   // reads P0420
+```
+
+```python
+from elmulator import Conversation, load_bundled
+
+adapter = Conversation(load_bundled("p0420_basic"))
+adapter.send("ATZ")
+assert "43 01 04 20" in adapter.send("03")             # reads P0420
+```
+
+### Over TCP, from any language
 
 ```bash
 pip install elmulator
-elmulator serve scenarios/p0420_basic.scenario.json --port 35000
+elmulator serve p0420_basic --port 35000   # a bundled name, or a path to your own scenario
 # point your app's Wi-Fi/TCP transport at 127.0.0.1:35000
 ```
 
@@ -65,16 +87,15 @@ There is a built-in check that needs no app code:
 elmulator self-test        # loopback smoke test: prints SELF-TEST OK
 ```
 
-### Bluetooth stack in a unit test (Swift)
+### The Bluetooth stack in a unit test (Swift)
 
 ```swift
 import Elmulator
 import ElmulatorBLE
 import ElmulatorBLETestSupport
 
-// A scripted adapter, running as an in-process BLE central.
-let scenario = try Scenario.load(from: scenarioURL)
-let stack: any CentralStack = FakeCentral(scenario: scenario)   // no Bluetooth radio
+// A scripted adapter, running as an in-process BLE central. No Bluetooth radio.
+let stack: any CentralStack = FakeCentral(scenario: try .bundled("p0420_basic"))
 
 // Your production Bluetooth code targets this same `CentralStack` protocol (the
 // real CoreBluetooth central implements it too), so drive it here and check
@@ -92,12 +113,29 @@ swift run elmulator-ble --scenario scenarios/p0420_basic.scenario.json
 # iPhone/app to it over CoreBluetooth
 ```
 
+## Run it in GitHub Actions
+
+The composite action installs elmulator, serves a scenario over TCP, and hands back the bound port. Point your app's TCP transport at it and run your tests.
+
+```yaml
+- uses: qadanm/elmulator@v0.3.0
+  id: elm
+  with:
+    scenario: p0420_basic          # a bundled name, or a path in your repo
+    version: "==0.3.0"             # optional; omit to install the latest
+
+- run: swift test                  # or pytest, gradle, npm test, ...
+  env:
+    OBD_TCP_HOST: "127.0.0.1"
+    OBD_TCP_PORT: ${{ steps.elm.outputs.port }}
+```
+
 ## Test your iOS OBD2 app in CI
 
 The Simulator cannot do Bluetooth, and there is [no supported way to mock `CBPeripheral`](https://developer.apple.com/forums/thread/764024), so the Bluetooth path tends to be the part of an OBD2 app that never gets a test. With CoreBluetooth-Mock, elmulator lets your real CoreBluetooth code run against a scripted ELM327 on an ordinary macOS runner:
 
 ```swift
-let adapter = ElmulatorMockPeripheral(scenario: try .load(from: url))
+let adapter = ElmulatorMockPeripheral(scenario: try .bundled("p0420_basic"))
 adapter.simulate()                                  // scripted ELM327 as a mock BLE peripheral
 let client = MyOBDClient(forceMock: true)           // your real CBCentralManager code
 try await client.connect()
@@ -115,17 +153,18 @@ try await client.connect()
 | Scenario engine | `Elmulator` (Swift), `elmulator` (Python) | the request/reply engine: matching, echo, defaults, chunking, seeded jitter, stalls, disconnects |
 | TCP server | `ElmulatorTCP` in-process, or the `elmulator-tcp` / `elmulator serve` CLI | serves a scenario over localhost TCP |
 | Test client | `ElmulatorTestSupport` (`Conversation`, `Client`), and the Python `Conversation` / `Client` | drive the emulator in a few lines, in-process or over TCP |
+| GitHub Action | [`action.yml`](action.yml) | `uses: qadanm/elmulator@v0.3.0` serves a scenario in CI and outputs the bound port |
 | BLE test double | `ElmulatorBLETestSupport` (`FakeCentral`) | in-process fake central for CI, behind the `CentralStack` protocol |
 | CoreBluetooth-Mock bridge | `ElmulatorCoreBluetoothMock` (`ElmulatorMockPeripheral`) | turns a scenario into a mock BLE peripheral so your real CoreBluetooth code runs in CI |
 | BLE peripheral | `elmulator-ble` (macOS) | real CoreBluetooth peripheral advertising an ELM327 GATT profile |
 | BLE transport kit | `ElmulatorBLE` | GATT profile, connection state machine, `CentralStack` protocol, real central |
 | Scenario format | [`SPEC.md`](SPEC.md) and [`spec/`](spec/) | the `obd2.sim_scenario.v1` contract and its JSON Schema |
-| Example library | [`scenarios/`](scenarios/) | seven scenarios, each doubling as a regression fixture |
+| Example library | [`scenarios/`](scenarios/) | seven scenarios, each doubling as a regression fixture, and each loadable by name |
 | Conformance suite | [`conformance/`](conformance/) | byte-for-byte parity across implementations |
 
 ## Docs
 
-- [Getting started](docs/getting-started.md): TCP, in-process, and a real BLE peripheral.
+- [Getting started](docs/getting-started.md): in-process, TCP, and a real BLE peripheral.
 - [Test an iOS OBD2 app in CI](docs/testing-obd2-apps-in-ci.md): your real CoreBluetooth code, no radio.
 - [Mock an ELM327 over Bluetooth](docs/mock-elm327-over-bluetooth.md): the three ways to fake the adapter.
 - [elmulator vs ELM327-emulator](docs/elmulator-vs-elm327-emulator.md): what each one is for.
@@ -150,6 +189,8 @@ A scenario is a JSON file that describes a synthetic ELM327 conversation. For ea
 }
 ```
 
+You can also build a scenario in code instead of writing JSON (`Scenario(id:commands:)` in Swift, `build_scenario` in Python), and diff a decoded scan against a scenario's `expected_scan_summary` with `mismatches(observed:)` in Swift or `summary_mismatches` in Python. elmulator emits bytes and never decodes OBD2 itself, so the summary is a convenience oracle for values your own app decoded.
+
 ## Cross-platform
 
 The TCP server and the scenario format work with any language right now, since anything can open a socket. The in-process test double and the real BLE peripheral are Swift only for the moment. Plans for going wider, like a cross-platform BLE peripheral built on `bless` and ports of the engine, are in [docs/roadmap.md](docs/roadmap.md).
@@ -164,6 +205,7 @@ python/         pip package: TCP server and validator (pure stdlib)
 scenarios/      example scenario library (the regression fixtures)
 spec/           obd2.sim_scenario.v1 JSON Schema
 conformance/    cross-implementation byte-for-byte parity suite
+action.yml      GitHub Action that serves a scenario over TCP in CI
 docs/           getting-started, iOS CI guide, SwiftOBD2 guide, roadmap
 assets/         README demo (animated SVG and VHS tape)
 SPEC.md         the scenario format specification
