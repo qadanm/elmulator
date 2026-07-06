@@ -5,8 +5,8 @@ A pure-standard-library ELM327 TCP server and scenario validator. No third-party
 ## Install
 
 ```bash
-pip install elmulator          # once published
-# or from this checkout:
+pip install elmulator
+# or from a checkout of this repo:
 pip install -e .
 ```
 

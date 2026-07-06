@@ -5,9 +5,8 @@ Three ways to point your app at a fake adapter, from easiest to most realistic.
 ## 1. TCP (any language)
 
 ```bash
-cd python
-pip install -e .                       # or: pip install elmulator (once published)
-elmulator serve ../scenarios/p0420_basic.scenario.json --port 35000
+pip install elmulator
+elmulator serve scenarios/p0420_basic.scenario.json --port 35000
 ```
 
 Point your app's Wi-Fi/TCP OBD2 transport at `127.0.0.1:35000` and run a scan. Useful chaos flags:

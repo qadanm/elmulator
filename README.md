@@ -54,8 +54,8 @@ The closest tool out there is [ELM327-emulator](https://github.com/Ircama/ELM327
 ### TCP (any language)
 
 ```bash
-cd python && pip install -e .          # or: pip install elmulator (once published)
-elmulator serve ../scenarios/p0420_basic.scenario.json --port 35000
+pip install elmulator
+elmulator serve scenarios/p0420_basic.scenario.json --port 35000
 # point your app's Wi-Fi/TCP transport at 127.0.0.1:35000
 ```
 
