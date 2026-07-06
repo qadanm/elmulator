@@ -1,4 +1,4 @@
-name: "elmulator serve"
+name: "elmulator"
 description: "Start a scriptable ELM327 OBD2 adapter emulator over TCP and expose its bound port."
 branding:
   icon: "cpu"

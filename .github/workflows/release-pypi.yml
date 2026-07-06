@@ -1,10 +1,9 @@
 name: Publish to PyPI
 
 # Publishes the Python package when a GitHub release is published.
-# Uses PyPI Trusted Publishing (OIDC) — no API token/secret required.
+# Uses PyPI Trusted Publishing (OIDC), so no API token or secret is required.
 # One-time setup on PyPI: add a trusted publisher for this repo with
 #   owner: qadanm   repo: elmulator   workflow: release-pypi.yml   environment: pypi
-# See LAUNCH.md.
 
 on:
   release:

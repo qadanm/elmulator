@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims
 to follow semantic versioning.
 
+## [0.3.1] - 2026-07-06
+
+### Changed
+- The GitHub Action's display name is now `elmulator` (was `elmulator serve`), so the Marketplace listing and the step label in Actions logs read as the project name. No inputs or outputs changed. Pin `qadanm/elmulator@v0.3.1`, or `@v0` to track the latest 0.x.
+
+### Docs
+- Refreshed the README front page: the quickstart now leads with the in-process `Conversation` and load-by-name, and there is a dedicated GitHub Actions section.
+
 ## [0.3.0] - 2026-07-06
 
 Developer-experience release. Everything is additive except the BLE type rename, which ships with deprecated aliases so existing code keeps compiling.
