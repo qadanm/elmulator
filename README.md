@@ -39,14 +39,16 @@ Most OBD2 apps reach the car through a Bluetooth adapter, and that link is usual
   </picture>
 </p>
 
-What it does:
+One scenario engine backs every surface, so the same scripted adapter drives a fast in-process unit test, your real CoreBluetooth code in CI, an on-device BLE peripheral, and a plain TCP socket:
 
-- A small macOS program advertises an ELM327-style GATT profile (Nordic UART by default), and your app connects to it over real Bluetooth. Nothing is mocked.
-- The same engine also sits behind a `CentralStack` protocol. In unit tests you swap the real CoreBluetooth central for the fake one and run the whole connection flow with no radio.
-- If your app already uses CoreBluetooth directly, there is a bridge to Nordic's [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock). It turns a scenario into a mock BLE peripheral, so your existing `CBCentralManager` code runs against a scripted ELM327 under `swift test`. The [iOS CI guide](docs/testing-obd2-apps-in-ci.md) walks through it.
-- One command serves a scenario over plain TCP, which covers the Simulator, Android, and anything else that can open a socket. There is a [GitHub Action](#run-it-in-github-actions) that does the same in one step.
-- A scenario is just JSON. You write what the adapter replies, how it splits the reply into chunks, how long it waits, and when it stalls, drops the connection, or sends back garbage. Each file also records the scan result it should produce, so it works as a regression fixture.
-- The Python and Swift servers are checked against each other byte for byte by a [conformance suite](conformance/), so a scenario behaves the same no matter which one you run.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/features-dark.svg">
+    <img alt="One engine, every way to fake the adapter: an in-process BLE double behind the CentralStack protocol, a CoreBluetooth-Mock bridge for your real CBCentralManager code, a real BLE peripheral on macOS, a TCP server for any language, a GitHub Action, and byte-for-byte parity between the Python and Swift servers" src="assets/features-light.svg" width="880">
+  </picture>
+</p>
+
+A scenario is just JSON: you write what the adapter replies, how it splits the reply into chunks, how long it waits, and when it stalls, drops the connection, or sends back garbage. Each file also records the scan result it should produce, so it doubles as a regression fixture. The real Bluetooth peripheral advertises an ELM327-style GATT profile (Nordic UART by default) and your app connects over an actual radio, nothing mocked; everywhere else the same engine runs with no radio at all.
 
 The closest tool out there is [ELM327-emulator](https://github.com/Ircama/ELM327-emulator). It is good, but its Bluetooth support is RFCOMM serial (classic Bluetooth SPP) rather than the BLE/GATT that iOS adapters use, and its CC-BY-NC-SA license rules out commercial use. elmulator does BLE, has a testing story for iOS and CI, and is MIT. (Checked against its repo in 2026.)
 

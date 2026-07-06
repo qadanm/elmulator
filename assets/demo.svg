@@ -36,7 +36,7 @@
     </g>
 
     <!-- narration -->
-    <text class="l a2" x="26" y="130" fill="#8b949e">◇  Testing against a scripted ELM327 — no car, no adapter, no radio</text>
+    <text class="l a2" x="26" y="130" fill="#8b949e">◇  Testing against a scripted ELM327 · no car · no adapter · no radio</text>
 
     <!-- checks -->
     <g class="l a3"><text x="26" y="166"><tspan fill="#3fb950">✔</tspan><tspan fill="#c9d1d9" dx="8">connects over BLE and reads a stored P0420</tspan></text></g>
@@ -45,7 +45,7 @@
 
     <!-- summary -->
     <g class="l a6">
-      <text x="26" y="278" font-weight="bold"><tspan fill="#3fb950">✔  3 tests passed</tspan><tspan fill="#8b949e" dx="10" font-weight="normal">— on a plain macOS runner, zero hardware</tspan></text>
+      <text x="26" y="278" font-weight="bold"><tspan fill="#3fb950">✔  3 tests passed</tspan><tspan fill="#8b949e" dx="10" font-weight="normal">·  on a plain macOS runner, zero hardware</tspan></text>
       <text x="26" y="312" fill="#6e7681" font-size="13">elmulator + CoreBluetooth-Mock · your real CBCentralManager code, a scripted adapter</text>
     </g>
   </g>

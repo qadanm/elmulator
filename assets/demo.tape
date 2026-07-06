@@ -1,4 +1,4 @@
-# VHS tape — renders a real terminal GIF of the iOS CI demo.
+# VHS tape: renders a real terminal GIF of the iOS CI demo.
 # Install VHS (https://github.com/charmbracelet/vhs), then:  vhs assets/demo.tape
 # Produces assets/demo.gif.
 
