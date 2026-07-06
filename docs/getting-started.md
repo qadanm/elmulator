@@ -32,9 +32,9 @@ defer { Task { await server.stop() } }
 // connect your TCP transport to 127.0.0.1:port
 ```
 
-## 2. Bluetooth stack in a unit test — no radio (Swift)
+## 2. Bluetooth stack in a unit test, no radio (Swift)
 
-The whole point: run your real Bluetooth connection + parsing flow in CI with no Bluetooth hardware.
+Run your real Bluetooth connection and parsing flow in CI with no Bluetooth hardware.
 
 ```swift
 import Elmulator
@@ -51,7 +51,7 @@ let stack: any BLEStack = FakeBLEStack(scenario: scenario)   // in-process fake 
 // and on the scenario's expected_scan_summary.
 ```
 
-`FakeBLEStack` emits the same event order a real CoreBluetooth central reports (power-on → discover → connect → services → characteristics → notify), chunks replies to a notify-sized limit (default 20 bytes) like real BLE, and honors scenario stall/disconnect. Options: `profile:`, `configuration:`, `notifyChunkSize:`, `powerMode:`.
+`FakeBLEStack` emits the same event order a real CoreBluetooth central reports (power on, discover, connect, services, characteristics, notify), chunks replies to a notify-sized limit (default 20 bytes) like real BLE, and honors scenario stall and disconnect. Options: `profile:`, `configuration:`, `notifyChunkSize:`, `powerMode:`.
 
 ## 3. A real Bluetooth peripheral (macOS)
 
