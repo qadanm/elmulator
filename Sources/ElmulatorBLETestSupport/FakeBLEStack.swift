@@ -17,21 +17,21 @@ public actor FakeBLEStack: BLEStack {
         case unauthorized
     }
 
-    private let scenario: FakeELMScenario
+    private let scenario: Scenario
     private let profile: BLEAdapterProfile
     private let notifyChunkSize: Int
     private let powerMode: PowerMode
     private let peripheralID: String
     private let peripheralName: String
-    private var engine: FakeELMScenarioEngine
+    private var engine: ScenarioEngine
 
     private let stream: AsyncStream<BLEStackEvent>
     private let continuation: AsyncStream<BLEStackEvent>.Continuation
 
     public init(
-        scenario: FakeELMScenario,
+        scenario: Scenario,
         profile: BLEAdapterProfile = .fakeELM,
-        configuration: FakeELMEngineConfiguration = .init(),
+        configuration: EngineConfiguration = .init(),
         notifyChunkSize: Int = 20,
         powerMode: PowerMode = .poweredOn,
         peripheralID: String = "FAKE-BLE-PERIPHERAL",
@@ -43,7 +43,7 @@ public actor FakeBLEStack: BLEStack {
         self.powerMode = powerMode
         self.peripheralID = peripheralID
         self.peripheralName = peripheralName
-        self.engine = FakeELMScenarioEngine(scenario: scenario, configuration: configuration)
+        self.engine = ScenarioEngine(scenario: scenario, configuration: configuration)
         var storedContinuation: AsyncStream<BLEStackEvent>.Continuation!
         self.stream = AsyncStream(bufferingPolicy: .unbounded) { storedContinuation = $0 }
         self.continuation = storedContinuation

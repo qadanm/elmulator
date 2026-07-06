@@ -5,7 +5,7 @@ import Foundation
 
 /// Hosts a FakeELM scenario as a BLE peripheral using CBPeripheralManager.
 ///
-/// It reuses FakeELMScenarioEngine verbatim, so its matching, echo, default,
+/// It reuses ScenarioEngine verbatim, so its matching, echo, default,
 /// stall, and disconnect behavior is identical to the TCP servers. This tool
 /// adds a BLE transport and nothing else. All scenario data comes from
 /// Fixtures/sim_scenarios; no external emulator dictionaries are used.
@@ -13,26 +13,26 @@ final class PeripheralHost: NSObject, @unchecked Sendable {
     struct Options {
         var profile: BLEAdapterProfile
         var chunkSize: Int
-        var configuration: FakeELMEngineConfiguration
+        var configuration: EngineConfiguration
         var disconnectAfter: Int?
     }
 
-    private let scenario: FakeELMScenario
+    private let scenario: Scenario
     private let options: Options
     private let queue = DispatchQueue(label: "obd2.fakeelm.peripheral")
 
     private var manager: CBPeripheralManager?
     private var notifyCharacteristic: CBMutableCharacteristic?
-    private var engine: FakeELMScenarioEngine
+    private var engine: ScenarioEngine
     private var inboundBuffer = ""
     private var outbound: [Data] = []
     private var commandCount = 0
     private var disconnected = false
 
-    init(scenario: FakeELMScenario, options: Options) {
+    init(scenario: Scenario, options: Options) {
         self.scenario = scenario
         self.options = options
-        self.engine = FakeELMScenarioEngine(scenario: scenario, configuration: options.configuration)
+        self.engine = ScenarioEngine(scenario: scenario, configuration: options.configuration)
         super.init()
     }
 

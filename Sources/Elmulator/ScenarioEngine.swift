@@ -3,7 +3,7 @@ import Foundation
 /// Behavior knobs applied on top of a scenario. The same configuration
 /// semantics exist in Scripts/sim/fake_elm_server.py so the Swift and
 /// Python hosts stay interchangeable.
-public struct FakeELMEngineConfiguration: Sendable {
+public struct EngineConfiguration: Sendable {
     /// Cycled piece sizes applied after scenario-level splitting, for
     /// example [1, 2, 5]. Nil means no extra splitting.
     public var splitPattern: [Int]?
@@ -31,14 +31,14 @@ public struct FakeELMEngineConfiguration: Sendable {
 }
 
 /// One planned reply: byte pieces with delays, then an action.
-public struct FakeELMResponsePlan: Sendable {
+public struct ResponsePlan: Sendable {
     public struct Piece: Sendable, Equatable {
         public let bytes: [UInt8]
         public let delayMS: Int
     }
 
     public let pieces: [Piece]
-    public let postAction: FakeELMScenario.PostAction
+    public let postAction: Scenario.PostAction
     /// Nil when no scenario entry matched and a default reply was used.
     public let matchedRequest: String?
 
@@ -50,14 +50,14 @@ public struct FakeELMResponsePlan: Sendable {
 /// The scenario engine: pure request-to-reply planning with no I/O.
 /// Hosts (the in-process TCP server, the Python CLI server via the same
 /// semantics, and the future BLE peripheral tool) own transport concerns.
-public struct FakeELMScenarioEngine: Sendable {
-    private let scenario: FakeELMScenario
-    private let configuration: FakeELMEngineConfiguration
+public struct ScenarioEngine: Sendable {
+    private let scenario: Scenario
+    private let configuration: EngineConfiguration
     /// Consumption cursor per normalized request.
     private var cursors: [String: Int] = [:]
     private var random: SplitMix64
 
-    public init(scenario: FakeELMScenario, configuration: FakeELMEngineConfiguration = .init()) {
+    public init(scenario: Scenario, configuration: EngineConfiguration = .init()) {
         self.scenario = scenario
         self.configuration = configuration
         self.random = SplitMix64(seed: configuration.seed)
@@ -70,7 +70,7 @@ public struct FakeELMScenarioEngine: Sendable {
             .filter { !$0.isWhitespace && $0 != "\r" && $0 != "\n" }
     }
 
-    public mutating func plan(for rawCommand: String) -> FakeELMResponsePlan {
+    public mutating func plan(for rawCommand: String) -> ResponsePlan {
         let normalized = Self.normalize(rawCommand)
         let entries = scenario.commands.enumerated().filter {
             Self.normalize($0.element.request) == normalized
@@ -94,15 +94,15 @@ public struct FakeELMScenarioEngine: Sendable {
         return buildPlan(command: command, rawCommand: rawCommand)
     }
 
-    private func echoEnabled(for command: FakeELMScenario.Command?) -> Bool {
+    private func echoEnabled(for command: Scenario.Command?) -> Bool {
         if let forced = configuration.echoOverride { return forced }
         return command?.echo ?? false
     }
 
     private mutating func buildPlan(
-        command: FakeELMScenario.Command,
+        command: Scenario.Command,
         rawCommand: String
-    ) -> FakeELMResponsePlan {
+    ) -> ResponsePlan {
         var text = ""
         if echoEnabled(for: command) {
             text += Self.normalize(rawCommand) + "\r"
@@ -119,7 +119,7 @@ public struct FakeELMScenarioEngine: Sendable {
         )
         pieces = applyChunking(pieces)
 
-        var planned: [FakeELMResponsePlan.Piece] = []
+        var planned: [ResponsePlan.Piece] = []
         for (index, piece) in pieces.enumerated() {
             var delay = index == 0 ? command.delayMS + configuration.extraLatencyMS : 0
             if index == 0, configuration.jitterMS > 0 {
@@ -127,14 +127,14 @@ public struct FakeELMScenarioEngine: Sendable {
             }
             planned.append(.init(bytes: Array(piece.utf8), delayMS: delay))
         }
-        return FakeELMResponsePlan(
+        return ResponsePlan(
             pieces: planned,
             postAction: command.postAction,
             matchedRequest: command.request
         )
     }
 
-    private mutating func defaultPlan(for normalized: String, rawCommand: String) -> FakeELMResponsePlan {
+    private mutating func defaultPlan(for normalized: String, rawCommand: String) -> ResponsePlan {
         let body = normalized.hasPrefix("AT")
             ? scenario.defaults.atResponse
             : scenario.defaults.obdResponse
@@ -144,9 +144,9 @@ public struct FakeELMScenarioEngine: Sendable {
         }
         text += body
         let pieces = applyChunking([text]).map {
-            FakeELMResponsePlan.Piece(bytes: Array($0.utf8), delayMS: configuration.extraLatencyMS)
+            ResponsePlan.Piece(bytes: Array($0.utf8), delayMS: configuration.extraLatencyMS)
         }
-        return FakeELMResponsePlan(pieces: pieces, postAction: .none, matchedRequest: nil)
+        return ResponsePlan(pieces: pieces, postAction: .none, matchedRequest: nil)
     }
 
     // MARK: - Splitting

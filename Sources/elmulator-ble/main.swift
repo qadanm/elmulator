@@ -70,7 +70,7 @@ func parseArguments(_ arguments: [String]) -> (scenarioPath: String, options: Pe
         text.split(separator: ",").compactMap { Int($0) }
     }
 
-    let configuration = FakeELMEngineConfiguration(
+    let configuration = EngineConfiguration(
         splitPattern: splitPattern,
         echoOverride: nil,
         extraLatencyMS: intValue("--latency-ms", default: 0),
@@ -89,9 +89,9 @@ func parseArguments(_ arguments: [String]) -> (scenarioPath: String, options: Pe
 
 let (scenarioPath, options) = parseArguments(CommandLine.arguments)
 
-let scenario: FakeELMScenario
+let scenario: Scenario
 do {
-    scenario = try FakeELMScenario.load(from: URL(filePath: scenarioPath))
+    scenario = try Scenario.load(from: URL(filePath: scenarioPath))
 } catch {
     fail("could not load scenario: \(error)")
 }

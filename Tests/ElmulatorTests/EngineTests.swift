@@ -14,11 +14,11 @@ func scenarioURL(_ name: String) -> URL {
         .appending(path: "\(name).scenario.json")
 }
 
-func loadScenario(_ name: String) throws -> FakeELMScenario {
-    try FakeELMScenario.load(from: scenarioURL(name))
+func loadScenario(_ name: String) throws -> Scenario {
+    try Scenario.load(from: scenarioURL(name))
 }
 
-@Suite("FakeELM scenario engine")
+@Suite("Scenario engine")
 struct EngineTests {
     @Test("all committed scenarios load and are synthetic")
     func scenariosLoad() throws {
@@ -35,7 +35,7 @@ struct EngineTests {
 
     @Test("command matching is whitespace and case insensitive")
     func normalization() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("p0420_basic"))
+        var engine = ScenarioEngine(scenario: try loadScenario("p0420_basic"))
         let plan = engine.plan(for: " at z \r")
         #expect(plan.matchedRequest == "ATZ")
         #expect(plan.joinedASCII.contains("ELM327 v1.5"))
@@ -43,7 +43,7 @@ struct EngineTests {
 
     @Test("echo true prepends the request before the reply")
     func echoBehavior() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("p0420_basic"))
+        var engine = ScenarioEngine(scenario: try loadScenario("p0420_basic"))
         let reset = engine.plan(for: "ATZ")
         #expect(reset.joinedASCII.hasPrefix("ATZ\r"))
         _ = engine.plan(for: "ATE0")
@@ -53,7 +53,7 @@ struct EngineTests {
 
     @Test("unknown AT and OBD commands get scenario defaults")
     func defaults() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("p0420_basic"))
+        var engine = ScenarioEngine(scenario: try loadScenario("p0420_basic"))
         let at = engine.plan(for: "ATDPN")
         #expect(at.matchedRequest == nil)
         #expect(at.joinedASCII == "OK\r\r>")
@@ -64,7 +64,7 @@ struct EngineTests {
 
     @Test("entries consume in order and the last one repeats")
     func consumptionOrder() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("adapter_disconnect"))
+        var engine = ScenarioEngine(scenario: try loadScenario("adapter_disconnect"))
         let first = engine.plan(for: "0100")
         #expect(first.pieces.isEmpty)
         #expect(first.postAction == .stall)
@@ -76,7 +76,7 @@ struct EngineTests {
 
     @Test("disconnect action is reported to the host")
     func disconnectAction() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("adapter_disconnect"))
+        var engine = ScenarioEngine(scenario: try loadScenario("adapter_disconnect"))
         for command in ["ATZ", "ATE0", "ATL0", "ATH1", "ATSP0", "0100", "0100", "0120", "0101"] {
             _ = engine.plan(for: command)
         }
@@ -87,7 +87,7 @@ struct EngineTests {
 
     @Test("scenario stream_split_bytes splits every reply")
     func scenarioSplitting() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("chunked_stream"))
+        var engine = ScenarioEngine(scenario: try loadScenario("chunked_stream"))
         let plan = engine.plan(for: "0100")
         #expect(plan.pieces.count > 3)
         #expect(plan.pieces.allSatisfy { $0.bytes.count <= 7 })
@@ -96,7 +96,7 @@ struct EngineTests {
 
     @Test("configuration split pattern cycles sizes")
     func patternSplitting() throws {
-        var engine = FakeELMScenarioEngine(
+        var engine = ScenarioEngine(
             scenario: try loadScenario("p0420_basic"),
             configuration: .init(splitPattern: [1, 2, 5])
         )
@@ -112,7 +112,7 @@ struct EngineTests {
 
     @Test("echo override forces echo on regardless of scenario")
     func echoOverride() throws {
-        var engine = FakeELMScenarioEngine(
+        var engine = ScenarioEngine(
             scenario: try loadScenario("p0420_basic"),
             configuration: .init(echoOverride: true)
         )
@@ -125,7 +125,7 @@ struct EngineTests {
     @Test("jitter is deterministic for a fixed seed")
     func deterministicJitter() throws {
         func delays(seed: UInt64) throws -> [Int] {
-            var engine = FakeELMScenarioEngine(
+            var engine = ScenarioEngine(
                 scenario: try loadScenario("p0420_basic"),
                 configuration: .init(jitterMS: 50, seed: seed)
             )
@@ -136,7 +136,7 @@ struct EngineTests {
 
     @Test("prompt content is preserved exactly")
     func promptPreserved() throws {
-        var engine = FakeELMScenarioEngine(scenario: try loadScenario("no_codes_basic"))
+        var engine = ScenarioEngine(scenario: try loadScenario("no_codes_basic"))
         for command in ["ATZ", "ATE0", "ATL0", "ATH1", "ATSP0"] {
             let plan = engine.plan(for: command)
             #expect(plan.joinedASCII.hasSuffix(">"), "\(command) reply must end at the prompt")
@@ -145,7 +145,7 @@ struct EngineTests {
 
     @Test("multi-line and malformed content passes through untouched")
     func contentPassthrough() throws {
-        var vinEngine = FakeELMScenarioEngine(scenario: try loadScenario("no_codes_basic"))
+        var vinEngine = ScenarioEngine(scenario: try loadScenario("no_codes_basic"))
         for command in ["ATZ", "ATE0", "ATL0", "ATH1", "ATSP0", "0100", "0120", "0101", "03", "07", "0A"] {
             _ = vinEngine.plan(for: command)
         }
@@ -153,7 +153,7 @@ struct EngineTests {
         #expect(vin.joinedASCII.contains("7E8 10 14 49 02 01 31 43 34\r"))
         #expect(vin.joinedASCII.contains("7E8 22 43 31 32 33 34 35 36\r\r>"))
 
-        var badEngine = FakeELMScenarioEngine(scenario: try loadScenario("malformed"))
+        var badEngine = ScenarioEngine(scenario: try loadScenario("malformed"))
         for command in ["ATZ", "ATE0", "ATL0", "ATH1", "ATSP0", "0100", "0101"] {
             _ = badEngine.plan(for: command)
         }
@@ -173,23 +173,23 @@ struct EngineTests {
             .appending(path: "bad-\(UUID().uuidString).scenario.json")
         try json.data(using: .utf8)!.write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
-        #expect(throws: FakeELMScenario.LoadError.notSynthetic("bad")) {
-            _ = try FakeELMScenario.load(from: url)
+        #expect(throws: Scenario.LoadError.notSynthetic("bad")) {
+            _ = try Scenario.load(from: url)
         }
     }
 }
 
-@Suite("FakeELM line framing")
+@Suite("Line framing")
 struct LineFramingTests {
     @Test("commands split on CR or LF and partials stay buffered")
     func lineExtraction() {
         var buffer = "010"
-        #expect(FakeELMTCPServer.takeLine(from: &buffer) == nil)
+        #expect(TCPServer.takeLine(from: &buffer) == nil)
         buffer += "0\r01"
-        #expect(FakeELMTCPServer.takeLine(from: &buffer) == "0100")
-        #expect(FakeELMTCPServer.takeLine(from: &buffer) == nil)
+        #expect(TCPServer.takeLine(from: &buffer) == "0100")
+        #expect(TCPServer.takeLine(from: &buffer) == nil)
         buffer += "05\n"
-        #expect(FakeELMTCPServer.takeLine(from: &buffer) == "0105")
+        #expect(TCPServer.takeLine(from: &buffer) == "0105")
         #expect(buffer.isEmpty)
     }
 }

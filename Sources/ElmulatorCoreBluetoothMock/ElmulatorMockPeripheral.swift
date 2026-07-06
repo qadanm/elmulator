@@ -14,7 +14,7 @@ import Foundation
 ///
 /// Usage in a test:
 /// ```swift
-/// let scenario = try FakeELMScenario.load(from: url)
+/// let scenario = try Scenario.load(from: url)
 /// let adapter = ElmulatorMockPeripheral(scenario: scenario)
 /// CBMCentralManagerMock.simulatePeripherals([adapter.spec])
 /// CBMCentralManagerMock.simulateInitialState(.poweredOn)
@@ -26,7 +26,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
     private let profile: BLEAdapterProfile
     private let notifyChunkSize: Int
     private let advertisedName: String
-    private var engine: FakeELMScenarioEngine
+    private var engine: ScenarioEngine
     private var inbound = ""
     private var notifyEnabled = false
 
@@ -41,16 +41,16 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
     private let service: CBMServiceMock
 
     public init(
-        scenario: FakeELMScenario,
+        scenario: Scenario,
         profile: BLEAdapterProfile = .fakeELM,
-        configuration: FakeELMEngineConfiguration = .init(),
+        configuration: EngineConfiguration = .init(),
         notifyChunkSize: Int = 20,
         advertisedName: String? = nil
     ) {
         self.profile = profile
         self.notifyChunkSize = notifyChunkSize
         self.advertisedName = advertisedName ?? profile.advertisedName
-        self.engine = FakeELMScenarioEngine(scenario: scenario, configuration: configuration)
+        self.engine = ScenarioEngine(scenario: scenario, configuration: configuration)
 
         let serviceUUID = CBMUUID(string: profile.serviceUUID)
         let writeUUID = CBMUUID(string: profile.writeCharacteristicUUID)

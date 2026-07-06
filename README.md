@@ -73,7 +73,7 @@ import ElmulatorBLE
 import ElmulatorBLETestSupport
 
 // A scripted adapter, running as an in-process BLE central.
-let scenario = try FakeELMScenario.load(from: scenarioURL)
+let scenario = try Scenario.load(from: scenarioURL)
 let stack: any BLEStack = FakeBLEStack(scenario: scenario)   // no Bluetooth radio
 
 // Your production Bluetooth code targets this same `BLEStack` protocol (the

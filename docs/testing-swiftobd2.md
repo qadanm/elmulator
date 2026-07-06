@@ -25,7 +25,7 @@ SwiftOBD2 already has a `CommProtocol` seam (`BLEComm`, `WifiComm`, `MOCKComm`),
 ```swift
 // What becomes possible once CommProtocol is public and injectable:
 final class ElmulatorComm: CommProtocol {
-    private var engine: FakeELMScenarioEngine
+    private var engine: ScenarioEngine
     func sendCommand(_ command: String, retries: Int) async throws -> [String] {
         // feed the command to the scenario engine, return the decoded lines
     }

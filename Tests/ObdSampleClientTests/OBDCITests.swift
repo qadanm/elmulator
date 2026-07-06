@@ -23,7 +23,7 @@ private func withScriptedAdapter(
     notifyChunkSize: Int = 20,
     _ body: (ELM327Client) async throws -> Void
 ) async throws {
-    let loaded = try FakeELMScenario.load(from: scenarioURL(scenario))
+    let loaded = try Scenario.load(from: scenarioURL(scenario))
     let adapter = ElmulatorMockPeripheral(scenario: loaded, notifyChunkSize: notifyChunkSize)
     adapter.simulate()                                   // register + power on
     defer { CBMCentralManagerMock.tearDownSimulation() }

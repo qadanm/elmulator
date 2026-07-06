@@ -6,20 +6,20 @@ import Network
 /// integration tests. The standalone CLI equivalent for manual simulator
 /// sessions is Scripts/sim/fake_elm_server.py; both speak the same
 /// scenario format with the same semantics.
-public actor FakeELMTCPServer {
+public actor TCPServer {
     public enum ServerError: Error, Sendable {
         case startFailed(String)
         case notRunning
     }
 
-    private let scenario: FakeELMScenario
-    private let configuration: FakeELMEngineConfiguration
+    private let scenario: Scenario
+    private let configuration: EngineConfiguration
     private var listener: NWListener?
     private var connections: [NWConnection] = []
     private var handlerTasks: [Task<Void, Never>] = []
     private let queue = DispatchQueue(label: "obd2.fakeelm.server")
 
-    public init(scenario: FakeELMScenario, configuration: FakeELMEngineConfiguration = .init()) {
+    public init(scenario: Scenario, configuration: EngineConfiguration = .init()) {
         self.scenario = scenario
         self.configuration = configuration
     }
@@ -89,7 +89,7 @@ public actor FakeELMTCPServer {
         let scenario = self.scenario
         let configuration = self.configuration
         let task = Task {
-            var engine = FakeELMScenarioEngine(scenario: scenario, configuration: configuration)
+            var engine = ScenarioEngine(scenario: scenario, configuration: configuration)
             var buffer = ""
             do {
                 receive: while !Task.isCancelled {

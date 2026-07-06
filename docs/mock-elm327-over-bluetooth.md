@@ -10,7 +10,7 @@ If your app talks to Bluetooth through a protocol boundary, use `FakeBLEStack`. 
 import Elmulator
 import ElmulatorBLETestSupport
 
-let scenario = try FakeELMScenario.load(from: scenarioURL)
+let scenario = try Scenario.load(from: scenarioURL)
 let stack: any BLEStack = FakeBLEStack(scenario: scenario)
 // drive your production code against `stack`, then check the result
 ```

@@ -35,7 +35,7 @@ struct FakeBLEStackTests {
 
     @Test("emits the CoreBluetooth event sequence up to notify-ready")
     func handshakeSequence() async throws {
-        let scenario = try FakeELMScenario.load(from: scenarioURL("p0420_basic"))
+        let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))
         let stack = FakeBLEStack(scenario: scenario)
         defer { Task { await stack.stop() } }
 
@@ -75,7 +75,7 @@ struct FakeBLEStackTests {
 
     @Test("a written command comes back reassembled across notifications")
     func writeRoundTrip() async throws {
-        let scenario = try FakeELMScenario.load(from: scenarioURL("p0420_basic"))
+        let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))
         let stack = FakeBLEStack(scenario: scenario)
         defer { Task { await stack.stop() } }
 

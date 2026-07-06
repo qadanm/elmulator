@@ -41,7 +41,7 @@ import Elmulator
 import ElmulatorCoreBluetoothMock
 import CoreBluetoothMock
 
-let scenario = try FakeELMScenario.load(from: scenarioURL("p0420_basic"))
+let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))
 let adapter = ElmulatorMockPeripheral(scenario: scenario)   // a scripted ELM327
 adapter.simulate()                                          // register + power on the mock
 defer { CBMCentralManagerMock.tearDownSimulation() }

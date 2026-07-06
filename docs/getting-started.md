@@ -25,8 +25,8 @@ From Swift you can host the same scenario in-process (no subprocess):
 import Elmulator
 import ElmulatorTCP
 
-let scenario = try FakeELMScenario.load(from: url)
-let server = FakeELMTCPServer(scenario: scenario)
+let scenario = try Scenario.load(from: url)
+let server = TCPServer(scenario: scenario)
 let port = try await server.start(port: 0)   // ephemeral
 defer { Task { await server.stop() } }
 // connect your TCP transport to 127.0.0.1:port
@@ -41,7 +41,7 @@ import Elmulator
 import ElmulatorBLE
 import ElmulatorBLETestSupport
 
-let scenario = try FakeELMScenario.load(from: url)
+let scenario = try Scenario.load(from: url)
 let stack: any BLEStack = FakeBLEStack(scenario: scenario)   // in-process fake central
 // In production you'd instead write:  let stack = makeCoreBluetoothStack()
 

@@ -6,7 +6,7 @@ import Foundation
 /// Fixtures/sim_scenarios and are validated by Scripts/sim/validate_scenarios.py.
 /// No scenario content is copied from third-party simulators; the byte
 /// patterns mirror this repo's own replay traces.
-public struct FakeELMScenario: Codable, Sendable {
+public struct Scenario: Codable, Sendable {
     public struct Defaults: Codable, Sendable {
         public let atResponse: String
         public let obdResponse: String
@@ -114,8 +114,8 @@ public struct FakeELMScenario: Codable, Sendable {
         case notSynthetic(String)
     }
 
-    public static func load(from url: URL) throws -> FakeELMScenario {
-        let scenario = try JSONDecoder().decode(FakeELMScenario.self, from: try Data(contentsOf: url))
+    public static func load(from url: URL) throws -> Scenario {
+        let scenario = try JSONDecoder().decode(Scenario.self, from: try Data(contentsOf: url))
         guard scenario.schemaVersion == "obd2.sim_scenario.v1" else {
             throw LoadError.unsupportedSchema(scenario.schemaVersion)
         }

@@ -64,7 +64,7 @@ let splitPattern = values["--split"].map { text in
     text.split(separator: ",").compactMap { Int($0) }
 }
 
-let configuration = FakeELMEngineConfiguration(
+let configuration = EngineConfiguration(
     splitPattern: splitPattern,
     echoOverride: echoOverride,
     extraLatencyMS: intValue("--latency-ms", in: values, default: 0),
@@ -74,14 +74,14 @@ let configuration = FakeELMEngineConfiguration(
 
 let port = UInt16(intValue("--port", in: values, default: 35000))
 
-let scenario: FakeELMScenario
+let scenario: Scenario
 do {
-    scenario = try FakeELMScenario.load(from: URL(filePath: scenarioPath))
+    scenario = try Scenario.load(from: URL(filePath: scenarioPath))
 } catch {
     fail("could not load scenario: \(error)")
 }
 
-let server = FakeELMTCPServer(scenario: scenario, configuration: configuration)
+let server = TCPServer(scenario: scenario, configuration: configuration)
 let bound = try await server.start(port: port)
 // Write directly to the file handle: `print` is block-buffered when stdout is
 // a pipe, which would hide this line from a parent process reading it live.

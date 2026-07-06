@@ -8,4 +8,4 @@ from .server import EngineState, Scenario, normalize, serve, self_test
 
 __all__ = ["Scenario", "EngineState", "normalize", "serve", "self_test", "__version__"]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

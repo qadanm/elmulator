@@ -10,6 +10,8 @@ pip install elmulator
 pip install -e .
 ```
 
+If the `elmulator` command is not on your PATH after installing (pip prints a warning when the scripts directory is not on PATH), use `python -m elmulator` instead. It works the same way, for example `python -m elmulator self-test`.
+
 ## CLI
 
 ```bash
