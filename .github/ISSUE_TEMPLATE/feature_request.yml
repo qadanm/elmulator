@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a new scenario capability, API, or surface for elmulator.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's missing
+      description: The gap you hit, ideally with the real testing scenario it came from.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed shape
+      description: A sketch of the API, scenario field, or CLI flag, if you have one in mind. Rough is fine.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: Any workaround you're using today, so the tradeoff is clear.
+    validations:
+      required: false

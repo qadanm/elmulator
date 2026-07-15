@@ -1,0 +1,58 @@
+name: Bug report
+description: Something in elmulator doesn't behave the way the docs or a scenario say it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Security vulnerabilities should go
+        through [private reporting](https://github.com/qadanm/elmulator/security/advisories/new)
+        instead of a public issue.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The elmulator release, PyPI version, or commit SHA you're on.
+      placeholder: v0.3.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where it happened
+      options:
+        - Swift package (Elmulator / ElmulatorBLE / ElmulatorTCP)
+        - Python package (pip install elmulator)
+        - CoreBluetooth-Mock bridge
+        - GitHub Action
+        - Conformance suite / scenario format
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: A scenario file, command, or short code snippet that reproduces it. This is the single most useful thing you can include.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Swift/Xcode version or Python version, however it applies.
+    validations:
+      required: false

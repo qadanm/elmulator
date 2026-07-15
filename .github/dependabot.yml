@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Swift package dependencies (Package.swift): today just Nordic's
+  # CoreBluetooth-Mock. Security updates are also handled automatically
+  # by GitHub regardless of this schedule; this adds routine version PRs.
+  - package-ecosystem: "swift"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  # The GitHub Actions used by this repo's own workflows (checkout,
+  # setup-python, the PyPI publish action, and so on).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
