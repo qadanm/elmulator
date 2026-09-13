@@ -18,6 +18,8 @@ With no --swift-bin, it runs the Python server against itself (a determinism
 check) so the suite is still meaningful on Linux CI without a Swift toolchain.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import socket

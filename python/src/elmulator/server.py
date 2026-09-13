@@ -4,7 +4,7 @@
 Serves an obd2.sim_scenario.v1 scenario over localhost TCP so an app in a
 simulator, or any TCP client in any language, can run a full OBD2 session
 without a car. The matching, echo, splitting, and jitter semantics are the
-same as the Swift `FakeELMScenarioEngine` — the two implementations are held
+same as the Swift `ScenarioEngine`, and the two implementations are held
 byte-for-byte equivalent by the conformance suite.
 
 Pure Python standard library; no third-party dependencies.

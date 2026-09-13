@@ -61,7 +61,7 @@ jobs:
         run: pip install -e ./python
       - name: Build
         run: swift build
-      - name: Test (engine, BLE state machine, and the iOS CI example — no radio)
+      - name: Test (engine, BLE state machine, and the iOS CI example, no radio)
         run: swift test
       - name: Conformance (Python vs Swift, byte-for-byte)
         run: |

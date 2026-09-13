@@ -6,7 +6,7 @@ Seven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a
 |---|---|
 | [`no_codes_basic`](no_codes_basic.scenario.json) | A clean full scan: no stored/pending/permanent codes, MIL off, VIN retrieved, live values. The healthy-vehicle baseline. |
 | [`p0420_basic`](p0420_basic.scenario.json) | One stored code (**P0420**, catalytic converter), MIL on, VIN, live values. The canonical "found a fault" path. |
-| [`p0301_basic`](p0301_basic.scenario.json) | One stored code (**P0301**, cylinder-1 misfire) with a freeze frame that carries a trailing pad byte — exercises robust frame parsing. |
+| [`p0301_basic`](p0301_basic.scenario.json) | One stored code (**P0301**, cylinder-1 misfire) with a freeze frame that carries a trailing pad byte. Exercises robust frame parsing. |
 | [`chunked_stream`](chunked_stream.scenario.json) | The clean scan delivered in **7-byte chunks** (`stream_split_bytes: 7`) to mimic BLE notification sizes and harsh TCP segmentation. Tests reassembly. |
 | [`headers_off_echo_on`](headers_off_echo_on.scenario.json) | A clone-adapter quirk: commands are echoed despite `ATE0`, headers are absent despite `ATH1`, and the VIN arrives in ELM multi-line form. Tests adapter-compatibility handling. |
 | [`adapter_disconnect`](adapter_disconnect.scenario.json) | Chaos: the first `0100` **stalls** (timeout → retry), the retry succeeds, then `03` **disconnects**. Validates typed transport-error handling. |

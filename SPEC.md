@@ -19,7 +19,7 @@ File names end in `.scenario.json`, and the base name must equal `scenario_id`.
 |---|---|---|---|
 | `schema_version` | string | yes | Must be exactly `"obd2.sim_scenario.v1"`. |
 | `scenario_id` | string | yes | Must match the file name without `.scenario.json`. |
-| `synthetic` | boolean | yes | Must be `true`. A loader must refuse anything else — emulated bytes must never masquerade as real vehicle data. |
+| `synthetic` | boolean | yes | Must be `true`. A loader must refuse anything else: emulated bytes must never masquerade as real vehicle data. |
 | `description` | string | yes | Human-readable summary (non-empty). |
 | `adapter_profile` | string | yes | Free-form label for the behavior being emulated, e.g. `"elm327_like_tcp"`. |
 | `defaults` | object | yes | Replies for unmatched commands (see below). |
@@ -42,8 +42,8 @@ Each entry in `commands`:
 
 | Field | Type | Default | Meaning |
 |---|---|---|---|
-| `request` | string | — | The command this entry answers (matched normalized). Required. |
-| `response_chunks` | string[] | — | Reply payload pieces, concatenated in order. Required (may be empty for a stall). |
+| `request` | string | n/a | The command this entry answers (matched normalized). Required. |
+| `response_chunks` | string[] | n/a | Reply payload pieces, concatenated in order. Required (may be empty for a stall). |
 | `delay_ms` | integer ≥ 0 | `0` | Delay before the **first** chunk of this reply. |
 | `echo` | boolean | `false` | Prepend the normalized request + `\r` to the reply (ELM echo). |
 | `prompt` | boolean | `true` | Whether the reply ends at the prompt `>`. Used by the validator to sanity-check chunk content; it does not itself append `>`. |
@@ -52,7 +52,7 @@ Each entry in `commands`:
 
 ### Ordered consumption and `repeat`
 
-Multiple entries may share the same `request`. They are consumed **in order**: the first match returns the first entry, the next match the second, and so on. The cursor caps at the last entry, so **the last matching entry repeats indefinitely** — re-polling a PID never goes silent. An entry with `repeat: true` pins the cursor at that entry so it answers every subsequent match.
+Multiple entries may share the same `request`. They are consumed **in order**: the first match returns the first entry, the next match the second, and so on. The cursor caps at the last entry, so **the last matching entry repeats indefinitely**: re-polling a PID never goes silent. An entry with `repeat: true` pins the cursor at that entry so it answers every subsequent match.
 
 This is how a scenario models, e.g., a command that times out once and then succeeds on retry (`adapter_disconnect`), or live data that can be polled repeatedly.
 
@@ -65,13 +65,13 @@ For a matched entry, the reply bytes are built as:
 3. The result is split, in this order: first by the authored chunk boundaries, then by `stream_split_bytes` (if set), then by any host-provided split pattern (e.g. `--split 1,2,5`).
 4. `delay_ms` + any host latency + deterministic jitter is applied before the first piece only.
 
-Splitting only changes **how the bytes are framed on the wire**, never their content — a correct client reassembles the identical stream regardless of chunking.
+Splitting only changes **how the bytes are framed on the wire**, never their content: a correct client reassembles the identical stream regardless of chunking.
 
 ### Post-actions
 
-- `none` — send the reply; the connection stays open.
-- `stall` — send nothing and take no further action, forcing the client's session to time out and (typically) retry. A stall entry must have empty `response_chunks` and `prompt: false`.
-- `disconnect` — send any chunks, then close the connection. Forces the client to observe a dropped link.
+- `none`: send the reply; the connection stays open.
+- `stall`: send nothing and take no further action, forcing the client's session to time out and (typically) retry. A stall entry must have empty `response_chunks` and `prompt: false`.
+- `disconnect`: send any chunks, then close the connection. Forces the client to observe a dropped link.
 
 ## `expected_scan_summary`
 

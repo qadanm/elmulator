@@ -19,4 +19,4 @@ Exit code 0 means all implementations agreed; non-zero prints the diverging comm
 
 ## Adding an implementation
 
-Any server that (a) accepts a scenario path and a `--port`, and (b) prints `LISTENING <port>` on stdout once bound, can be dropped in — add a `*_cmd()` builder and wire it into `run()`. New scenarios in [`scenarios/`](../scenarios/) are picked up automatically.
+Any server that (a) accepts a scenario path and a `--port`, and (b) prints `LISTENING <port>` on stdout once bound, can be dropped in. Add a `*_cmd()` builder and wire it into `run()`. New scenarios in [`scenarios/`](../scenarios/) are picked up automatically.

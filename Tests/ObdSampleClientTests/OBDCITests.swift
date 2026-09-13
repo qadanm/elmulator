@@ -71,7 +71,7 @@ struct OBDCITests {
         try await withScriptedAdapter("malformed") { client in
             _ = try await client.send("ATZ")
             let garbage = try await client.send("03")
-            // The client returns whatever bytes arrived, up to the prompt — it
+            // The client returns whatever bytes arrived, up to the prompt. It
             // must not crash. Interpretation/robustness is the app's job.
             #expect(garbage.contains(">"))
         }

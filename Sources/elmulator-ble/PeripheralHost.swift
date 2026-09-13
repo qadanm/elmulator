@@ -95,7 +95,7 @@ final class PeripheralHost: NSObject, @unchecked Sendable {
             return
         }
         let piece = pieces[index]
-        let send = { [weak self] in
+        let send: @Sendable () -> Void = { [weak self] in
             guard let self else { return }
             self.enqueueNotification(Data(piece.bytes))
             self.schedule(pieces, index: index + 1, thenDisconnect: thenDisconnect)

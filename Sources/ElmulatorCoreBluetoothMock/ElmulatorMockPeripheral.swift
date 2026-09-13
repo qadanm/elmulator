@@ -5,7 +5,7 @@ import Foundation
 
 /// Turns an elmulator scenario into a Nordic-CoreBluetooth-Mock peripheral, so
 /// an app's **real** CoreBluetooth code can be tested against a scripted
-/// ELM327 adapter — on the iOS Simulator or in CI, with no Bluetooth radio.
+/// ELM327 adapter, on the iOS Simulator or in CI, with no Bluetooth radio.
 ///
 /// This is the bridge for the large majority of OBD2 apps that talk to
 /// `CBCentralManager`/`CBPeripheral` directly (via the drop-in `CBM*` types
@@ -41,7 +41,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
     private let notifyUUID: CBMUUID
 
     // The notify characteristic instance must be the *same* object that lives
-    // in the service — `simulateValueUpdate` verifies membership by identity.
+    // in the service: `simulateValueUpdate` verifies membership by identity.
     private let notifyCharacteristic: CBMCharacteristicMock
     private let writeCharacteristic: CBMCharacteristicMock
     private let service: CBMServiceMock
@@ -136,7 +136,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
         return .success(())
     }
 
-    // Write without response — the common ELM327 clone path.
+    // Write without response: the common ELM327 clone path.
     public func peripheral(
         _ peripheral: CBMPeripheralSpec,
         didReceiveWriteCommandFor characteristic: CBMCharacteristicMock,

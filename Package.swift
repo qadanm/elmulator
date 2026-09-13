@@ -13,9 +13,9 @@ let package = Package(
         // drive the emulator in a few lines.
         .library(name: "ElmulatorTestSupport", targets: ["ElmulatorTestSupport"]),
         // BLE transport kit: GATT profile, connection state machine,
-        // BLEStack protocol, and the real CoreBluetooth central.
+        // CentralStack protocol, and the real CoreBluetooth central.
         .library(name: "ElmulatorBLE", targets: ["ElmulatorBLE"]),
-        // The in-process fake BLE central — swap it for the real one in tests.
+        // The in-process fake BLE central: swap it for the real one in tests.
         .library(name: "ElmulatorBLETestSupport", targets: ["ElmulatorBLETestSupport"]),
         // Bridge to Nordic's CoreBluetooth-Mock: test an app's real
         // CoreBluetooth code against a scripted ELM327, no radio.
@@ -59,7 +59,7 @@ let package = Package(
             dependencies: ["Elmulator", "ElmulatorBLE"]
         ),
         // Copy-this example: a realistic ELM327 BLE client in pure
-        // CoreBluetooth-Mock (no elmulator import). Not a product — it's an
+        // CoreBluetooth-Mock (no elmulator import). Not a product: it's an
         // example the docs point to, and the test target below drives it
         // against scripted scenarios in CI with no radio.
         .target(

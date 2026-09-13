@@ -1,13 +1,13 @@
 import CoreBluetoothMock
 import Foundation
 
-/// A small, realistic ELM327 BLE client — the kind of code a real OBD2 app
+/// A small, realistic ELM327 BLE client: the kind of code a real OBD2 app
 /// has in its Bluetooth layer.
 ///
 /// It is written entirely against CoreBluetooth-Mock's `CBM*` types. On a real
 /// device those forward to the system CoreBluetooth; on the Simulator or in CI
 /// (with `forceMock: true`) they run against a mock peripheral. **This file has
-/// no dependency on elmulator** — that only appears in the test target, which
+/// no dependency on elmulator.** That only appears in the test target, which
 /// scripts the adapter's behavior. That separation is the whole point: your
 /// production Bluetooth code stays pure, and the test injects the fake.
 ///
@@ -26,7 +26,7 @@ public final class ELM327Client: NSObject, @unchecked Sendable {
         case notReady
     }
 
-    // Nordic UART — the common ELM327 BLE clone profile.
+    // Nordic UART: the common ELM327 BLE clone profile.
     private let serviceUUID = CBMUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
     private let writeUUID = CBMUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
     private let notifyUUID = CBMUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")

@@ -1,4 +1,4 @@
-# elmulator — Python package
+# elmulator: Python package
 
 A pure-standard-library ELM327 TCP server and scenario validator. No third-party dependencies. Python 3.9+.
 

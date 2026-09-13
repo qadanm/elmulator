@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims
 to follow semantic versioning.
 
+## [0.3.2] - 2026-09-12
+
+### Fixed
+- `conformance/run_conformance.py` crashed on startup under Python 3.9 with `TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`, a bare PEP 604 union (`str | None`) evaluated eagerly with no `from __future__ import annotations` guard. This is the same class of bug fixed in the package's `__init__.py` for 0.3.0; the conformance script was missed at the time. `requires-python = ">=3.9"` was not actually true for this entry point until now. Verified on a real Python 3.9.6 interpreter: the conformance suite, the full pytest suite, and `elmulator self-test` all pass.
+- A handful of stale doc comments still referenced pre-rename Swift type names (`BLEStack`, `FakeELMScenarioEngine`) from the 0.3.0 and 0.2.0 renames.
+
+### Changed
+- Resolved a Swift 6 strict-concurrency warning in the BLE peripheral host (`elmulator-ble`) by explicitly marking a dispatched closure `@Sendable`, consistent with the type's existing `@unchecked Sendable` conformance. No behavior change.
+- Disabled the repository's Wiki feature; it was enabled but had never been initialized with any content.
+
 ## [0.3.1] - 2026-07-06
 
 ### Changed
