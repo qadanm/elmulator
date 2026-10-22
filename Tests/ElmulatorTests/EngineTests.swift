@@ -122,6 +122,44 @@ struct EngineTests {
         #expect(plan.joinedASCII.hasPrefix("ATH1\r"))
     }
 
+    @Test("authored chunk boundaries survive an echo override that turns echo off")
+    func authoredBoundariesEchoOff() {
+        let scenario = Scenario(id: "framing", commands: [
+            Scenario.Command(request: "03", responseChunks: ["43 00\r", "\r>"], echo: true),
+        ])
+        var engine = ScenarioEngine(scenario: scenario, configuration: .init(echoOverride: false))
+        let pieces = engine.plan(for: "03").pieces.map { String(decoding: $0.bytes, as: UTF8.self) }
+        #expect(pieces == ["43 00\r", "\r>"])
+    }
+
+    @Test("authored chunk boundaries survive an echo override that turns echo on")
+    func authoredBoundariesEchoOn() {
+        let scenario = Scenario(id: "framing", commands: [
+            Scenario.Command(request: "03", responseChunks: ["43 00\r", "\r>"], echo: false),
+        ])
+        var engine = ScenarioEngine(scenario: scenario, configuration: .init(echoOverride: true))
+        let pieces = engine.plan(for: "03").pieces.map { String(decoding: $0.bytes, as: UTF8.self) }
+        #expect(pieces == ["03\r", "43 00\r", "\r>"])
+    }
+
+    @Test("default replies apply latency and jitter only to the first piece")
+    func defaultReplyLatency() {
+        let scenario = Scenario(
+            scenarioID: "latency",
+            defaults: Scenario.Defaults(atResponse: "OK\r\r>", obdResponse: "NO DATA\r\r>"),
+            streamSplitBytes: 4,
+            commands: [Scenario.Command(request: "ATZ", responseChunks: ["ELM327\r\r>"])]
+        )
+        var engine = ScenarioEngine(
+            scenario: scenario,
+            configuration: .init(extraLatencyMS: 10, jitterMS: 5, seed: 1)
+        )
+        let plan = engine.plan(for: "0142")
+        #expect(plan.pieces.count > 1)
+        #expect(plan.pieces.dropFirst().allSatisfy { $0.delayMS == 0 })
+        #expect((10...15).contains(plan.pieces.first?.delayMS ?? -1))
+    }
+
     @Test("jitter is deterministic for a fixed seed")
     func deterministicJitter() throws {
         func delays(seed: UInt64) throws -> [Int] {

@@ -4,8 +4,7 @@ import Foundation
 ///
 /// This is intentionally tiny and self-contained: the emulator side owns its
 /// own error vocabulary so nothing here depends on a host app's transport
-/// types. A consuming app maps these onto its own error model at the seam
-/// (for example in its `BLETransportClient`).
+/// types. A consuming app maps these onto its own error model at the seam.
 public enum ConnectionError: Error, Equatable, Sendable {
     /// The connection never reached the ready state (power, auth, discovery,
     /// subscribe, or connect-deadline failures).

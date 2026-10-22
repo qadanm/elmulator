@@ -2,7 +2,7 @@
   "schema_version": "obd2.sim_scenario.v1",
   "scenario_id": "p0301_basic",
   "synthetic": true,
-  "description": "Full scan with one stored code P0301 and a freeze frame reply that carries a trailing pad byte. Byte-compatible with the p0301_basic replay trace.",
+  "description": "Full scan with one stored code P0301 and a freeze frame reply that carries a trailing pad byte.",
   "adapter_profile": "elm327_like_tcp",
   "defaults": {
     "at_response": "OK\r\r>",

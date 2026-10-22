@@ -7,7 +7,7 @@ A SwiftPM package for emulating an ELM327 OBD2 adapter over TCP and Bluetooth LE
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/qadanm/elmulator.git", from: "0.2.0"),
+    .package(url: "https://github.com/qadanm/elmulator.git", from: "0.3.2"),
 ],
 ```
 
@@ -27,8 +27,8 @@ dependencies: [
 ## Executables
 
 ```bash
-swift run elmulator-tcp --scenario ../scenarios/p0420_basic.scenario.json --port 35000
-swift run elmulator-ble --scenario ../scenarios/p0420_basic.scenario.json   # macOS, real BLE
+swift run elmulator-tcp --scenario scenarios/p0420_basic.scenario.json --port 35000
+swift run elmulator-ble --scenario scenarios/p0420_basic.scenario.json   # macOS, real BLE
 ```
 
 ## Design

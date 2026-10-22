@@ -4,8 +4,8 @@ import Foundation
 ///
 /// Scenarios are hand-authored synthetic fixtures under `scenarios/` and are
 /// validated by the `elmulator validate` command and the JSON Schema in
-/// `spec/`. No scenario content is copied from third-party simulators; the byte
-/// patterns mirror this repo's own replay traces.
+/// `spec/`. No scenario content is copied from third-party simulators; the
+/// byte patterns follow standard OBD2 (SAE J1979 / ISO 15765-4).
 ///
 /// Load one from a file with `load(from:)`, from the bundled set by name with
 /// `bundled(_:)`, or build one in code with the memberwise initializers.

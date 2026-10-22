@@ -40,10 +40,16 @@ struct BundledScenarioTests {
         }
     }
 
-    @Test("bundledNames is the scenario set")
-    func names() {
+    @Test("bundledNames matches the scenario directory")
+    func names() throws {
         #expect(Scenario.bundledNames.contains("p0420_basic"))
-        #expect(Scenario.bundledNames.count == 7)
+        let directory = scenarioURL("placeholder").deletingLastPathComponent()
+        let expected = try FileManager.default
+            .contentsOfDirectory(atPath: directory.path)
+            .filter { $0.hasSuffix(".scenario.json") }
+            .map { String($0.dropLast(".scenario.json".count)) }
+            .sorted()
+        #expect(Scenario.bundledNames == expected)
     }
 
     @Test("unknown bundled name throws")

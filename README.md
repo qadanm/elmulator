@@ -121,11 +121,11 @@ swift run elmulator-ble --scenario scenarios/p0420_basic.scenario.json
 The composite action installs elmulator, serves a scenario over TCP, and hands back the bound port. Point your app's TCP transport at it and run your tests.
 
 ```yaml
-- uses: qadanm/elmulator@v0.3.1    # or @v0 to track the latest 0.x
+- uses: qadanm/elmulator@v0.3.2    # or @v0 to track the latest 0.x
   id: elm
   with:
     scenario: p0420_basic          # a bundled name, or a path in your repo
-    version: "==0.3.1"             # optional; omit to install the latest
+    version: "==0.3.2"             # optional; omit to install the latest
 
 - run: swift test                  # or pytest, gradle, npm test, ...
   env:
@@ -156,7 +156,7 @@ try await client.connect()
 | Scenario engine | `Elmulator` (Swift), `elmulator` (Python) | the request/reply engine: matching, echo, defaults, chunking, seeded jitter, stalls, disconnects |
 | TCP server | `ElmulatorTCP` in-process, or the `elmulator-tcp` / `elmulator serve` CLI | serves a scenario over localhost TCP |
 | Test client | `ElmulatorTestSupport` (`Conversation`, `Client`), and the Python `Conversation` / `Client` | drive the emulator in a few lines, in-process or over TCP |
-| GitHub Action | [`action.yml`](action.yml) | `uses: qadanm/elmulator@v0.3.1` serves a scenario in CI and outputs the bound port |
+| GitHub Action | [`action.yml`](action.yml) | `uses: qadanm/elmulator@v0.3.2` serves a scenario in CI and outputs the bound port |
 | BLE test double | `ElmulatorBLETestSupport` (`FakeCentral`) | in-process fake central for CI, behind the `CentralStack` protocol |
 | CoreBluetooth-Mock bridge | `ElmulatorCoreBluetoothMock` (`ElmulatorMockPeripheral`) | turns a scenario into a mock BLE peripheral so your real CoreBluetooth code runs in CI |
 | BLE peripheral | `elmulator-ble` (macOS) | real CoreBluetooth peripheral advertising an ELM327 GATT profile |
@@ -196,7 +196,7 @@ You can also build a scenario in code instead of writing JSON (`Scenario(id:comm
 
 ## Cross-platform
 
-The TCP server and the scenario format work with any language right now, since anything can open a socket. The in-process test double and the real BLE peripheral are Swift only for the moment. Plans for going wider, like a cross-platform BLE peripheral built on `bless` and ports of the engine, are in [docs/roadmap.md](docs/roadmap.md).
+The TCP server and the scenario format work with any language right now, since anything can open a socket. Python also has an in-process `Conversation` and a TCP `Client`. The in-process BLE test double and the real BLE peripheral are Swift only for the moment. Plans for going wider, like a cross-platform BLE peripheral built on `bless` and ports of the engine, are in [docs/roadmap.md](docs/roadmap.md).
 
 ## Layout
 

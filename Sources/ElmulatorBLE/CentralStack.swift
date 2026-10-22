@@ -2,8 +2,8 @@ import Foundation
 
 /// Events a BLE central stack reports. These map onto the connection state
 /// machine's events, plus incoming notifications. Defining them as plain
-/// data is what lets BLETransportClient be tested without a radio: a fake
-/// stack emits the same events a real CoreBluetooth central would.
+/// data is what lets your transport be tested without a radio: a fake stack
+/// emits the same events a real CoreBluetooth central would.
 public enum CentralEvent: Sendable {
     case poweredOn
     case poweredOff
@@ -21,7 +21,7 @@ public enum CentralEvent: Sendable {
 
 /// A central-role BLE stack: scan, connect, discover, subscribe, write.
 /// The real implementation wraps CoreBluetooth (CoreBluetoothStack); the
-/// test implementation drives a FakeELM peripheral in-process. Events are
+/// test implementation drives a scripted scenario in-process. Events are
 /// delivered in order through a single AsyncStream so the transport
 /// processes them exactly as CoreBluetooth reported them.
 public protocol CentralStack: Sendable {

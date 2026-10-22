@@ -30,25 +30,37 @@ func fail(_ message: String) -> Never {
     exit(2)
 }
 
+let knownOptions: Set<String> = [
+    "--scenario", "--port", "--echo", "--split",
+    "--latency-ms", "--jitter-ms", "--seed",
+]
+
 var values: [String: String] = [:]
-do {
-    let list = Array(CommandLine.arguments.dropFirst())
-    var index = 0
-    while index < list.count {
-        let token = list[index]
-        guard token.hasPrefix("--") else { fail("unexpected argument: \(token)") }
-        if token == "--help" { print(usage); exit(0) }
-        guard index + 1 < list.count else { fail("missing value for \(token)") }
-        values[token] = list[index + 1]
-        index += 2
-    }
+let list = Array(CommandLine.arguments.dropFirst())
+var index = 0
+while index < list.count {
+    let token = list[index]
+    guard token.hasPrefix("--") else { fail("unexpected argument: \(token)") }
+    if token == "--help" { print(usage); exit(0) }
+    guard knownOptions.contains(token) else { fail("unknown option: \(token)") }
+    guard index + 1 < list.count else { fail("missing value for \(token)") }
+    values[token] = list[index + 1]
+    index += 2
 }
 
 guard let scenarioPath = values["--scenario"] else { fail("--scenario is required") }
 
-func intValue(_ key: String, in values: [String: String], default fallback: Int) -> Int {
+func intValue(
+    _ key: String,
+    in values: [String: String],
+    default fallback: Int,
+    range: ClosedRange<Int>? = nil
+) -> Int {
     guard let raw = values[key] else { return fallback }
     guard let value = Int(raw) else { fail("\(key) must be an integer") }
+    if let range, !range.contains(value) {
+        fail("\(key) must be between \(range.lowerBound) and \(range.upperBound)")
+    }
     return value
 }
 
@@ -60,19 +72,29 @@ case "scenario": echoOverride = nil
 default: fail("--echo must be on, off, or scenario")
 }
 
-let splitPattern = values["--split"].map { text in
-    text.split(separator: ",").compactMap { Int($0) }
+let splitPattern: [Int]?
+if let raw = values["--split"] {
+    let parts = raw.split(separator: ",")
+    guard !parts.isEmpty else { fail("--split needs at least one positive size") }
+    splitPattern = parts.map { part in
+        guard let size = Int(part), size > 0 else {
+            fail("--split values must be positive integers, for example 1,2,5")
+        }
+        return size
+    }
+} else {
+    splitPattern = nil
 }
 
 let configuration = EngineConfiguration(
     splitPattern: splitPattern,
     echoOverride: echoOverride,
-    extraLatencyMS: intValue("--latency-ms", in: values, default: 0),
-    jitterMS: intValue("--jitter-ms", in: values, default: 0),
-    seed: UInt64(intValue("--seed", in: values, default: 0))
+    extraLatencyMS: intValue("--latency-ms", in: values, default: 0, range: 0...Int.max),
+    jitterMS: intValue("--jitter-ms", in: values, default: 0, range: 0...Int.max),
+    seed: UInt64(intValue("--seed", in: values, default: 0, range: 0...Int.max))
 )
 
-let port = UInt16(intValue("--port", in: values, default: 35000))
+let port = UInt16(intValue("--port", in: values, default: 35000, range: 0...65535))
 
 let scenario: Scenario
 do {

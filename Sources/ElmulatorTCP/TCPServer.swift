@@ -4,7 +4,7 @@ import Network
 
 /// A localhost TCP host for the scenario engine, used in-process by
 /// integration tests. The standalone CLI equivalent for manual simulator
-/// sessions is Scripts/sim/fake_elm_server.py; both speak the same
+/// sessions is `python/src/elmulator/server.py`; both speak the same
 /// scenario format with the same semantics.
 public actor TCPServer {
     public enum ServerError: Error, Sendable {

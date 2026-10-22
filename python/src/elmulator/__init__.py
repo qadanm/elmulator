@@ -15,10 +15,9 @@ from .server import EngineState, Scenario, normalize, self_test, serve
 from .summary import summary_mismatches
 
 __all__ = [
-    "Scenario", "EngineState", "normalize", "serve", "self_test",
-    "Conversation", "Client", "serve_in_background",
-    "load_bundled", "bundled_names", "build_scenario", "summary_mismatches",
-    "__version__",
+    "Client", "Conversation", "EngineState", "Scenario", "build_scenario",
+    "bundled_names", "load_bundled", "normalize", "self_test", "serve",
+    "serve_in_background", "summary_mismatches", "__version__",
 ]
 
 __version__ = "0.3.2"

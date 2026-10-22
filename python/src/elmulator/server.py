@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Scriptable ELM327 TCP server.
 
 Serves an obd2.sim_scenario.v1 scenario over localhost TCP so an app in a
@@ -117,7 +116,11 @@ class EngineState:
             echo = False
 
         text = (normalized + "\r" if echo else "") + "".join(command["response_chunks"])
-        pieces = self._split(text)
+        pieces = self._split(
+            text,
+            chunks=command["response_chunks"],
+            echo_prefix_length=len(normalized) + 1 if echo else 0,
+        )
         first_delay = command.get("delay_ms", 0) + self.args.latency_ms + self._jitter()
         return pieces, first_delay, command.get("post_action", "none"), command["request"]
 
@@ -135,13 +138,36 @@ class EngineState:
             return 0
         return self.random.next() % (self.args.jitter_ms + 1)
 
-    def _split(self, text: str):
-        pieces = [text] if text else []
+    def _split(self, text: str, chunks=None, echo_prefix_length: int = 0):
+        pieces = self._authored_pieces(text, chunks or [], echo_prefix_length)
         if self.scenario.stream_split_bytes:
             pieces = self._slice(pieces, [self.scenario.stream_split_bytes])
         if self.args.split:
             pieces = self._slice(pieces, self.args.split)
         return [piece for piece in pieces if piece]
+
+    @staticmethod
+    def _authored_pieces(text: str, chunks, echo_prefix_length: int):
+        """Split on the scenario's authored chunk boundaries, mirroring the
+        Swift engine. The echo prefix is its own boundary when enabled."""
+        if not text:
+            return []
+        boundaries = []
+        if echo_prefix_length:
+            boundaries.append(echo_prefix_length)
+        position = echo_prefix_length
+        for chunk in chunks[:-1]:
+            position += len(chunk)
+            boundaries.append(position)
+        pieces = []
+        start = 0
+        for boundary in sorted(boundaries):
+            if boundary > start and boundary <= len(text):
+                pieces.append(text[start:boundary])
+                start = boundary
+        if start < len(text):
+            pieces.append(text[start:])
+        return pieces
 
     @staticmethod
     def _slice(pieces, sizes):

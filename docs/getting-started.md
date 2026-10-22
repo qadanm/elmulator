@@ -6,18 +6,23 @@ Three ways to point your app at a fake adapter, from easiest to most realistic.
 
 ```bash
 pip install elmulator
-elmulator serve scenarios/p0420_basic.scenario.json --port 35000
+elmulator serve p0420_basic --port 35000   # a bundled name, or a .scenario.json path
 ```
 
 Point your app's Wi-Fi/TCP OBD2 transport at `127.0.0.1:35000` and run a scan. Useful chaos flags:
 
 ```bash
 elmulator serve SCEN --port 35000 \
-  --echo scenario \        # on | off | scenario
-  --split 1,2,5 \          # fragment replies into cycled byte sizes
-  --latency-ms 40 \        # add latency to each reply
-  --jitter-ms 100 --seed 42   # deterministic jitter
+  --echo scenario \
+  --split 1,2,5 \
+  --latency-ms 40 \
+  --jitter-ms 100 --seed 42
 ```
+
+- `--echo on|off|scenario` forces command echo on or off, or follows the scenario.
+- `--split 1,2,5` fragments replies into cycled byte sizes.
+- `--latency-ms 40` adds latency before each reply.
+- `--jitter-ms 100 --seed 42` adds deterministic jitter.
 
 From Swift you can host the same scenario in-process (no subprocess):
 

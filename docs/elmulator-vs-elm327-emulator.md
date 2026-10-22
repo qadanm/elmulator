@@ -10,7 +10,7 @@ Both are emulators for ELM327 OBD2 adapters, so you can build and test OBD2 soft
 | Bluetooth LE (GATT) | Yes: a real BLE peripheral on macOS, plus an in-process mock | No: its Bluetooth is an RFCOMM serial port (classic Bluetooth), which iOS apps do not use |
 | TCP | Yes | Yes |
 | Serial and pty | No | Yes |
-| In-process test double for unit tests | Yes (Swift) | No |
+| In-process test double for unit tests | Yes (Swift BLE; Python engine) | No |
 | Bridge for testing real CoreBluetooth code | Yes (CoreBluetooth-Mock) | No |
 | Emulator language | Swift and Python | Python |
 | How you define behavior | JSON scenario files, each also a test fixture | Python dictionaries and plugins, plus an interactive prompt |

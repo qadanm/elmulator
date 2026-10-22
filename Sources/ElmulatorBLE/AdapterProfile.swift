@@ -3,10 +3,10 @@ import Foundation
 /// The GATT profile the app expects an ELM-style BLE adapter to expose.
 ///
 /// The defaults are a UART-style service used by many ELM327 clones. Clone
-/// adapters vary, so every value is configurable, and the defaults are to
-/// be verified against the real adapters on hand before they are frozen
-/// (Docs/testing/FAKE_BLE_PERIPHERAL.md). The FakeELMBLEPeripheral tool and
-/// BLETransportClient share this type so both sides of a test agree.
+/// adapters vary, so every value is configurable; verify the defaults against
+/// the real adapters you target before freezing them. The `elmulator-ble`
+/// peripheral and the in-process `FakeCentral` share this type so both sides
+/// of a test agree.
 public struct AdapterProfile: Sendable, Equatable {
     /// Advertised service that carries the command and response
     /// characteristics.
@@ -47,7 +47,7 @@ public struct AdapterProfile: Sendable, Equatable {
         advertisedName: "FakeELM"
     )
 
-    /// The profile the FakeELMBLEPeripheral tool advertises by default. Same
+    /// The profile the `elmulator-ble` executable advertises by default. Same
     /// UUIDs as `nordicUART`; named so tests and the tool reference one
     /// source of truth.
     public static let fakeELM = AdapterProfile.nordicUART

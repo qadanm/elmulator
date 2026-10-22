@@ -4,21 +4,31 @@ build-backend = "hatchling.build"
 
 [project]
 name = "elmulator"
-version = "0.3.2"
+dynamic = ["version"]
 description = "A scriptable Bluetooth LE and TCP OBD2 (ELM327) adapter emulator and CI test harness."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "elmulator contributors" }]
 keywords = ["obd2", "elm327", "emulator", "bluetooth", "ble", "automotive", "testing", "ci"]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Testing",
     "Topic :: System :: Emulators",
 ]
 dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
 
 [project.urls]
 Homepage = "https://github.com/qadanm/elmulator"
@@ -28,5 +38,11 @@ Specification = "https://github.com/qadanm/elmulator/blob/main/SPEC.md"
 [project.scripts]
 elmulator = "elmulator.cli:main"
 
+[tool.hatch.version]
+path = "src/elmulator/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/elmulator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

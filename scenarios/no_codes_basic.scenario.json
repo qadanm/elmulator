@@ -2,7 +2,7 @@
   "schema_version": "obd2.sim_scenario.v1",
   "scenario_id": "no_codes_basic",
   "synthetic": true,
-  "description": "Clean full scan over TCP: no stored codes, readiness complete, VIN reported. Byte-compatible with the no_codes_basic replay trace.",
+  "description": "Clean full scan over TCP: no stored codes, readiness complete, VIN reported.",
   "adapter_profile": "elm327_like_tcp",
   "defaults": {
     "at_response": "OK\r\r>",

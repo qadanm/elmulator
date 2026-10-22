@@ -3,12 +3,12 @@ import Elmulator
 import ElmulatorBLE
 import Foundation
 
-/// Hosts a FakeELM scenario as a BLE peripheral using CBPeripheralManager.
+/// Hosts a scenario as a BLE peripheral using CBPeripheralManager.
 ///
 /// It reuses ScenarioEngine verbatim, so its matching, echo, default,
 /// stall, and disconnect behavior is identical to the TCP servers. This tool
-/// adds a BLE transport and nothing else. All scenario data comes from
-/// Fixtures/sim_scenarios; no external emulator dictionaries are used.
+/// adds a BLE transport and nothing else. All scenario data comes from the
+/// repo's `scenarios/` directory; no external emulator dictionaries are used.
 final class PeripheralHost: NSObject, @unchecked Sendable {
     struct Options {
         var profile: AdapterProfile
@@ -150,7 +150,7 @@ final class PeripheralHost: NSObject, @unchecked Sendable {
     }
 
     func log(_ message: String) {
-        FileHandle.standardError.write(Data("[fake_elm_ble] \(message)\n".utf8))
+        FileHandle.standardError.write(Data("[elmulator-ble] \(message)\n".utf8))
     }
 }
 

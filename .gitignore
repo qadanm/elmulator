@@ -1,6 +1,5 @@
 # Swift / SwiftPM
 .build/
-Package.resolved
 *.xcodeproj
 .DS_Store
 
@@ -10,8 +9,10 @@ __pycache__/
 python/build/
 python/dist/
 python/*.egg-info/
+python/src/*.egg-info/
 src/*.egg-info/
 .pytest_cache/
+.ruff_cache/
 .venv/
 venv/
 

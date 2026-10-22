@@ -9,7 +9,7 @@ import argparse
 import socket
 import threading
 
-from .server import EngineState, Scenario, normalize, serve
+from .server import EngineState, Scenario, serve
 
 
 def _args(**overrides) -> argparse.Namespace:

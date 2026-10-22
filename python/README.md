@@ -6,8 +6,8 @@ A pure-standard-library ELM327 TCP server and scenario validator. No third-party
 
 ```bash
 pip install elmulator
-# or from a checkout of this repo:
-pip install -e .
+# or, from a checkout of this repo:
+pip install -e python/        # run from the repo root
 ```
 
 If the `elmulator` command is not on your PATH after installing (pip prints a warning when the scripts directory is not on PATH), use `python -m elmulator` instead. It works the same way, for example `python -m elmulator self-test`.
@@ -19,7 +19,10 @@ elmulator serve SCENARIO [--host H] [--port N] [--echo on|off|scenario] \
                          [--split a,b,c] [--latency-ms N] [--jitter-ms N] [--seed N]
 elmulator validate [PATHS...]     # files or dirs; defaults to the bundled examples
 elmulator self-test               # in-process loopback smoke test
+elmulator --version
 ```
+
+`SCENARIO` is a `.scenario.json` path or a bundled name such as `p0420_basic`.
 
 `serve` prints `LISTENING <port>` on stdout once bound (`--port 0` picks a free port) and logs activity to stderr. Each client gets its own scenario cursor state.
 

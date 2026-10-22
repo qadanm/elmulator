@@ -12,7 +12,7 @@ inputs:
     required: false
     default: "0"
   version:
-    description: "elmulator version spec for pip (for example ==0.3.0). Empty installs the latest."
+    description: "elmulator version spec for pip (for example ==0.3.2). Empty installs the latest."
     required: false
     default: ""
 outputs:

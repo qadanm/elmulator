@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Validates obd2.sim_scenario.v1 scenario files.
 
 Checks:

@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims
 to follow semantic versioning.
 
+## [Unreleased]
+
+### Fixed
+- Swift engine: with a host echo override off (`--echo off`, `echoOverride: false`), authored `response_chunks` boundaries were computed as if the echo prefix were still present, so replies were framed at the wrong offsets. Boundaries now follow the echo setting actually in effect.
+- Swift engine: unmatched (default) replies applied `--latency-ms` before every split piece instead of only the first, and never applied seeded jitter, diverging from the Python engine. Both now apply latency and jitter once, before the first piece.
+- Python engine: authored `response_chunks` boundaries were ignored, so the Python server framed replies differently from Swift even though SPEC.md requires authored boundaries to be preserved. Both engines now split identically.
+- `elmulator-tcp` and `elmulator-ble` crashed with a Swift runtime trap on out-of-range numeric options (`--seed -1`, `--port 70000`) and silently accepted unknown options. They now validate ranges and reject unknown flags.
+- `elmulator serve` rejects out-of-range ports, negative latency/jitter/seed, and non-positive `--split` sizes with an argparse error instead of a traceback.
+- `release-pypi.yml` now checks that the package version matches the release tag before publishing.
+
+### Changed
+- Stale internal references (old `FakeELMBLEPeripheral`, `Fixtures/`, and `Docs/testing/` paths) removed from CLI help, log prefixes, and doc comments.
+- Documentation: current version pins, a fixed multi-line shell example, corrected install and scenario paths, and Python's in-process `Conversation` is now described accurately.
+- Python package metadata uses an SPDX license expression, a single-sourced version, Python 3.9–3.13 classifiers, and a `test` extra.
+- `Package.resolved` is tracked so Dependabot's Swift updates can open pull requests.
+- CI also runs the minimum supported Python (3.9), `ruff`, and a wheel/sdist build plus smoke test.
+
+### Added
+- Regression tests for authored-boundary framing under echo overrides, default-reply latency/jitter, and Python CLI validation.
+
 ## [0.3.2] - 2026-09-12
 
 ### Fixed

@@ -61,7 +61,7 @@ jobs:
   ios-obd-tests:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: swift test          # no simulator, no device, no Bluetooth
 ```
 

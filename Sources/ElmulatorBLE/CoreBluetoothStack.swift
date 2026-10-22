@@ -18,7 +18,7 @@ public func makeCoreBluetoothStack() -> any CentralStack {
 /// This type cannot be exercised without a Bluetooth radio, so it is kept
 /// deliberately thin. Its orchestration is proven through the state machine
 /// tests and the fake-stack integration test; a real handshake is verified
-/// on a physical iPhone (Docs/testing/MACBOOK_ONLY_TESTING.md).
+/// on a physical iPhone.
 final class CoreBluetoothStack: NSObject, CentralStack, @unchecked Sendable {
     private let queue = DispatchQueue(label: "obd2.ble.central")
     private var central: CBCentralManager?

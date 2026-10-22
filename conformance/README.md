@@ -1,8 +1,10 @@
 # Conformance suite
 
-Proves that every implementation of `obd2.sim_scenario.v1` produces **byte-for-byte identical** wire output. This is what makes the scenario format a specification rather than one program's behavior.
+Proves that every implementation of `obd2.sim_scenario.v1` produces **byte-for-byte identical reply content**. This is what makes the scenario format a specification rather than one program's behavior.
 
 For each example scenario, the harness drives the scenario's own command sequence (plus a couple of unmatched commands to hit the default paths) against two servers and compares the raw reply bytes for every command.
+
+The harness compares reply bytes, not TCP segmentation (the OS may coalesce writes). Authored chunk boundaries are part of the engine contract and are covered by the Swift and Python unit tests.
 
 ## Run
 

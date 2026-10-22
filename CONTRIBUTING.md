@@ -10,6 +10,9 @@ Found a security vulnerability instead of a regular bug? See [SECURITY.md](SECUR
 # Python
 cd python && pip install -e . pytest && pytest -q && cd ..
 
+# Python lint (same rules as CI)
+pip install ruff && ruff check .
+
 # Swift
 swift build && swift test
 
@@ -18,10 +21,12 @@ swift build --product elmulator-tcp
 python conformance/run_conformance.py --swift-bin .build/debug/elmulator-tcp
 ```
 
+CI runs the Python suite on 3.9 (the minimum supported version) and 3.12, so keep new code 3.9-compatible.
+
 ## The bar for a change
 
 - **New scenarios** must pass `elmulator validate scenarios/` and are automatically covered by the conformance suite. Fill in `expected_scan_summary` and add a row to [`scenarios/README.md`](scenarios/README.md).
-- **Engine changes** must keep Python and Swift byte-for-byte identical. If you change one, change the other and confirm the conformance suite still passes.
+- **Engine changes** must keep Python and Swift byte-for-byte identical, including how authored `response_chunks` boundaries and `stream_split_bytes` frame a reply. If you change one, change the other and confirm the conformance suite still passes.
 - **Format changes** update [`SPEC.md`](SPEC.md) and [`spec/obd2.sim_scenario.v1.schema.json`](spec/obd2.sim_scenario.v1.schema.json) together. Backward-compatible additions stay under `v1`; breaking changes bump the `schema_version`.
 - Keep the Python package dependency-free (standard library only).
 

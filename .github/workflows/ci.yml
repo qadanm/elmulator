@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   python:
@@ -48,6 +56,64 @@ jobs:
           assert b"43 01 04 20" in reply, reply
           print("served bundled scenario over TCP:", reply)
           PY
+
+  python-min:
+    name: Python 3.9 (minimum supported)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.9"
+      - name: Install package + pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./python pytest
+      - name: Unit tests
+        run: pytest -q
+        working-directory: python
+      - name: Validate example scenarios
+        run: elmulator validate scenarios/
+      - name: Self-test
+        run: elmulator self-test
+      - name: Conformance (python determinism)
+        run: python conformance/run_conformance.py
+
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: ruff
+        run: |
+          pip install ruff
+          ruff check .
+
+  package:
+    name: Package (sdist + wheel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+        working-directory: python
+      - name: Check metadata
+        run: twine check dist/*
+        working-directory: python
+      - name: Install the wheel and smoke-test it
+        run: |
+          pip install python/dist/*.whl
+          elmulator --version
+          elmulator self-test
+          elmulator validate
 
   swift:
     name: Swift (build, test, conformance vs Python)

@@ -2,7 +2,7 @@
   "schema_version": "obd2.sim_scenario.v1",
   "scenario_id": "p0420_basic",
   "synthetic": true,
-  "description": "Full scan with one stored code P0420, MIL reported on, freeze frame present. Byte-compatible with the p0420_basic replay trace.",
+  "description": "Full scan with one stored code P0420, MIL reported on, freeze frame present.",
   "adapter_profile": "elm327_like_tcp",
   "defaults": {
     "at_response": "OK\r\r>",

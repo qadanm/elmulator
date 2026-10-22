@@ -7,7 +7,6 @@ import socket
 import threading
 from pathlib import Path
 
-import elmulator
 from elmulator import (
     Client, Conversation, Scenario, bundled_names, build_scenario,
     load_bundled, self_test, serve_in_background, summary_mismatches,
@@ -24,8 +23,12 @@ def test_self_test_passes():
 
 
 def test_bundled_names_and_load():
+    expected = sorted(
+        path.name.removesuffix(".scenario.json")
+        for path in SCENARIOS.glob("*.scenario.json")
+    )
+    assert bundled_names() == expected
     assert "p0420_basic" in bundled_names()
-    assert len(bundled_names()) == 7
     scenario = load_bundled("p0420_basic")
     assert scenario.scenario_id == "p0420_basic"
 
@@ -79,10 +82,8 @@ def test_serve_accepts_bundled_name(monkeypatch):
     import argparse
     args = argparse.Namespace(scenario="p0420_basic", host="127.0.0.1", port=0,
                               echo="scenario", split=None, latency_ms=0, jitter_ms=0, seed=0)
-    stop = threading.Event()
-    ready = threading.Event()
     # run_serve resolves the bundled name, then serve() binds and sets ready.
-    import elmulator.server as server
+    from elmulator import server
 
     def fake_serve(a, scenario, ready_event=None, stop_event=None):
         assert scenario.scenario_id == "p0420_basic"
@@ -102,6 +103,45 @@ def test_bundled_scenarios_validate():
 def test_normalize_is_case_and_space_insensitive():
     assert srv.normalize(" at z \r") == "ATZ"
     assert srv.normalize("0 1 0 0") == "0100"
+
+
+def test_authored_chunk_boundaries_are_preserved():
+    scenario = Scenario(build_scenario("framing", [
+        {"request": "03", "response_chunks": ["43 00\r", "\r>"], "echo": True},
+    ]))
+
+    pieces, _delay, _action, _matched = srv.EngineState(scenario, _args()).plan("03")
+    assert pieces == ["03\r", "43 00\r", "\r>"]
+
+    pieces, *_ = srv.EngineState(scenario, _args(echo="off")).plan("03")
+    assert pieces == ["43 00\r", "\r>"]
+
+    pieces, *_ = srv.EngineState(scenario, _args(echo="on")).plan("03")
+    assert pieces == ["03\r", "43 00\r", "\r>"]
+
+
+def test_cli_rejects_out_of_range_values():
+    import pytest
+
+    from elmulator.cli import build_parser
+
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["serve", "p0420_basic", "--port", "70000"])
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["serve", "p0420_basic", "--split", "1,0"])
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["serve", "p0420_basic", "--seed", "-1"])
+
+
+def test_cli_version(capsys):
+    import pytest
+
+    from elmulator.cli import build_parser
+
+    with pytest.raises(SystemExit) as exit_info:
+        build_parser().parse_args(["--version"])
+    assert exit_info.value.code == 0
+    assert "elmulator" in capsys.readouterr().out
 
 
 def _args(**overrides):

@@ -13,7 +13,7 @@ elmulator is one. It is MIT licensed and can advertise a real ELM327-style BLE p
 Yes, with [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock). elmulator turns a scenario into a mock peripheral for it, so your real `CBCentralManager` code runs under `swift test`. See [Test an iOS OBD2 app in CI](testing-obd2-apps-in-ci.md).
 
 **Does elmulator work with Android or other languages?**
-The TCP server and the scenario format do. Run `elmulator serve` and point any app at the socket. The in-process fake and the real BLE peripheral are Swift and macOS for now. See the [roadmap](roadmap.md).
+The TCP server and the scenario format do. Run `elmulator serve` and point any app at the socket. Python also ships an in-process `Conversation` for unit tests. The in-process BLE fake and the real BLE peripheral are Swift (and the peripheral is macOS) for now. See the [roadmap](roadmap.md).
 
 **What OBD2 standards does it cover?**
 Standard OBD2 over CAN: SAE J1979 and ISO 15765-4.

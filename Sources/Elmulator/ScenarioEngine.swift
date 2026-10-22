@@ -1,7 +1,7 @@
 import Foundation
 
 /// Behavior knobs applied on top of a scenario. The same configuration
-/// semantics exist in Scripts/sim/fake_elm_server.py so the Swift and
+/// semantics exist in `python/src/elmulator/server.py` so the Swift and
 /// Python hosts stay interchangeable.
 public struct EngineConfiguration: Sendable {
     /// Cycled piece sizes applied after scenario-level splitting, for
@@ -131,7 +131,7 @@ public struct ScenarioEngine: Sendable {
         }
 
         guard !entries.isEmpty else {
-            return defaultPlan(for: normalized, rawCommand: rawCommand)
+            return defaultPlan(for: normalized)
         }
 
         // Entries for one request are consumed in order. The cursor caps at
@@ -158,19 +158,22 @@ public struct ScenarioEngine: Sendable {
         rawCommand: String
     ) -> ResponsePlan {
         var text = ""
-        if echoEnabled(for: command) {
+        let echo = echoEnabled(for: command)
+        if echo {
             text += Self.normalize(rawCommand) + "\r"
         }
         text += command.responseChunks.joined()
 
         // Author-defined chunk boundaries are preserved by splitting on the
         // same offsets, then scenario and configuration splitting refine.
-        var pieces = split(
-            text: text,
-            authoredBoundaries: command.echo || configuration.echoOverride == true
-                ? [Self.normalize(rawCommand).count + 1] + boundaries(of: command.responseChunks, offset: Self.normalize(rawCommand).count + 1)
-                : boundaries(of: command.responseChunks, offset: 0)
-        )
+        // The echo prefix counts as its own authored boundary when enabled.
+        let echoLength = echo ? Self.normalize(rawCommand).count + 1 : 0
+        var authoredBoundaries: [Int] = []
+        if echoLength > 0 {
+            authoredBoundaries.append(echoLength)
+        }
+        authoredBoundaries += boundaries(of: command.responseChunks, offset: echoLength)
+        var pieces = split(text: text, authoredBoundaries: authoredBoundaries)
         pieces = applyChunking(pieces)
 
         var planned: [ResponsePlan.Piece] = []
@@ -188,7 +191,7 @@ public struct ScenarioEngine: Sendable {
         )
     }
 
-    private mutating func defaultPlan(for normalized: String, rawCommand: String) -> ResponsePlan {
+    private mutating func defaultPlan(for normalized: String) -> ResponsePlan {
         let body = normalized.hasPrefix("AT")
             ? scenario.defaults.atResponse
             : scenario.defaults.obdResponse
@@ -197,10 +200,17 @@ public struct ScenarioEngine: Sendable {
             text += normalized + "\r"
         }
         text += body
-        let pieces = applyChunking([text]).map {
-            ResponsePlan.Piece(bytes: Array($0.utf8), delayMS: configuration.extraLatencyMS)
+        // Host latency and jitter apply once, before the first piece, exactly
+        // as they do for a matched entry. Splitting must not multiply them.
+        var planned: [ResponsePlan.Piece] = []
+        for (index, piece) in applyChunking([text]).enumerated() {
+            var delay = index == 0 ? configuration.extraLatencyMS : 0
+            if index == 0, configuration.jitterMS > 0 {
+                delay += Int(random.next() % UInt64(configuration.jitterMS + 1))
+            }
+            planned.append(.init(bytes: Array(piece.utf8), delayMS: delay))
         }
-        return ResponsePlan(pieces: pieces, postAction: .none, matchedRequest: nil)
+        return ResponsePlan(pieces: planned, postAction: .none, matchedRequest: nil)
     }
 
     // MARK: - Splitting

@@ -2,7 +2,7 @@
   "schema_version": "obd2.sim_scenario.v1",
   "scenario_id": "malformed",
   "synthetic": true,
-  "description": "Garbage and truncated replies on every service. The scan must finish without crashing and must attach warnings instead of inventing data. Mirrors the malformed_responses replay trace.",
+  "description": "Garbage and truncated replies on every service. The scan must finish without crashing and must attach warnings instead of inventing data.",
   "adapter_profile": "elm327_like_tcp",
   "defaults": {
     "at_response": "OK\r\r>",

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """`elmulator` command line entry point.
 
 Subcommands:
@@ -10,11 +9,37 @@ Subcommands:
 import argparse
 import sys
 
-from . import server, validate
+from . import __version__, server, validate
+
+
+def _port(text: str) -> int:
+    try:
+        value = int(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+    if not 0 <= value <= 65535:
+        raise argparse.ArgumentTypeError("must be between 0 and 65535")
+    return value
+
+
+def _non_negative_int(text: str) -> int:
+    try:
+        value = int(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+    if value < 0:
+        raise argparse.ArgumentTypeError("must not be negative")
+    return value
 
 
 def _split_list(text: str):
-    return [int(piece) for piece in text.split(",") if piece]
+    try:
+        sizes = [int(piece) for piece in text.split(",") if piece]
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be comma-separated integers, e.g. 1,2,5") from error
+    if not sizes or any(size < 1 for size in sizes):
+        raise argparse.ArgumentTypeError("sizes must be positive integers, e.g. 1,2,5")
+    return sizes
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,12 +47,16 @@ def build_parser() -> argparse.ArgumentParser:
         prog="elmulator",
         description="Scriptable Bluetooth + TCP OBD2 (ELM327) adapter emulator.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command")
 
     serve = sub.add_parser("serve", help="host a scenario over localhost TCP")
-    serve.add_argument("scenario", help="path to a .scenario.json file")
+    serve.add_argument(
+        "scenario",
+        help="path to a .scenario.json file, or a bundled scenario name",
+    )
     serve.add_argument("--host", default="127.0.0.1")
-    serve.add_argument("--port", type=int, default=35000, help="0 picks a free port")
+    serve.add_argument("--port", type=_port, default=35000, help="0 picks a free port")
     serve.add_argument(
         "--echo", choices=["on", "off", "scenario"], default="scenario",
         help="force echo on or off, or follow the scenario (default)",
@@ -36,9 +65,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--split", type=_split_list, default=None,
         help="cycled piece sizes, for example 1,2,5",
     )
-    serve.add_argument("--latency-ms", type=int, default=0)
-    serve.add_argument("--jitter-ms", type=int, default=0)
-    serve.add_argument("--seed", type=int, default=0, help="deterministic jitter seed")
+    serve.add_argument("--latency-ms", type=_non_negative_int, default=0)
+    serve.add_argument("--jitter-ms", type=_non_negative_int, default=0)
+    serve.add_argument(
+        "--seed", type=_non_negative_int, default=0, help="deterministic jitter seed",
+    )
 
     check = sub.add_parser("validate", help="validate scenario files")
     check.add_argument(

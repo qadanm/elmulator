@@ -83,7 +83,7 @@
         "response_chunks": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Reply payload pieces, sent in order. \\r and \\n are literal. Joined, then split by stream_split_bytes and any host split pattern."
+          "description": "Reply payload pieces, sent in order. \\r and \\n are literal. Joined, then split on these authored chunk boundaries, then by stream_split_bytes and any host split pattern."
         },
         "delay_ms": {
           "type": "integer",
