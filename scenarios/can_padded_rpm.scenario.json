@@ -1,0 +1,24 @@
+{
+  "schema_version": "obd2.sim_scenario.v1",
+  "scenario_id": "can_padded_rpm",
+  "synthetic": true,
+  "description": "Single frame length 04 bounds the payload. RPM bytes 1A F8 encode 6904/4 = 1726; AA BB CC are padding. Provenance and exact expected outcome: docs/can-validation-fixtures.md.",
+  "adapter_profile": "elm327_like_tcp",
+  "defaults": {
+    "at_response": "OK\r\r>",
+    "obd_response": "NO DATA\r\r>"
+  },
+  "warnings": [],
+  "commands": [
+    {
+      "request": "010C",
+      "response_chunks": [
+        "7E8 04 41 0C 1A F8 AA BB CC\r\r>"
+      ],
+      "echo": false
+    }
+  ],
+  "expected_scan_summary": {
+    "live_value_count": 1
+  }
+}

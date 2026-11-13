@@ -1,0 +1,25 @@
+{
+  "schema_version": "obd2.sim_scenario.v1",
+  "scenario_id": "can_truncated_payload",
+  "synthetic": true,
+  "description": "Single frame declares six payload bytes but carries four. A reader must report incomplete/invalid data. Provenance and exact expected outcome: docs/can-validation-fixtures.md.",
+  "adapter_profile": "elm327_like_tcp",
+  "defaults": {
+    "at_response": "OK\r\r>",
+    "obd_response": "NO DATA\r\r>"
+  },
+  "warnings": [],
+  "commands": [
+    {
+      "request": "03",
+      "response_chunks": [
+        "7E8 06 43 01 04 20\r\r>"
+      ],
+      "echo": false
+    }
+  ],
+  "expected_scan_summary": {
+    "no_stored_codes_observation": false,
+    "min_session_warnings": 1
+  }
+}
