@@ -7,7 +7,7 @@ to follow semantic versioning.
 ## [Unreleased]
 
 ### Added
-- Four synthetic CAN validation fixtures: wrong service, invalid hex, truncated payload, and padded RPM. Immutable byte expectations are tested in Swift and Python and automatically included in cross-language TCP conformance. See `docs/can-validation-fixtures.md`. 
+- Four synthetic CAN validation fixtures: wrong service, invalid hex, truncated payload, and padded RPM. Immutable byte expectations are tested in Swift and Python and automatically included in cross-language TCP conformance. See `docs/can-validation-fixtures.md`.
 
 ### Fixed
 - Swift engine: with a host echo override off (`--echo off`, `echoOverride: false`), authored `response_chunks` boundaries were computed as if the echo prefix were still present, so replies were framed at the wrong offsets. Boundaries now follow the echo setting actually in effect.
