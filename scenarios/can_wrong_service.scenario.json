@@ -1,0 +1,25 @@
+{
+  "schema_version": "obd2.sim_scenario.v1",
+  "scenario_id": "can_wrong_service",
+  "synthetic": true,
+  "description": "Request Mode 03, receive Mode 07. A correlated reader must reject this response, not report stored codes. Provenance and exact expected outcome: docs/can-validation-fixtures.md.",
+  "adapter_profile": "elm327_like_tcp",
+  "defaults": {
+    "at_response": "OK\r\r>",
+    "obd_response": "NO DATA\r\r>"
+  },
+  "warnings": [],
+  "commands": [
+    {
+      "request": "03",
+      "response_chunks": [
+        "7E8 04 47 01 04 20\r\r>"
+      ],
+      "echo": false
+    }
+  ],
+  "expected_scan_summary": {
+    "no_stored_codes_observation": false,
+    "min_session_warnings": 1
+  }
+}
