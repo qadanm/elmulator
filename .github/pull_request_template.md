@@ -1,6 +1,6 @@
-## Local change review
+## Change summary
 
-This is a local review record. It does not imply that a remote pull request or hosted CI run exists. Do not push or publish this change without explicit maintainer authorization.
+Use this template for a pull request or a local review record. Distinguish local test evidence from hosted CI results. Agent-driven work requires explicit maintainer authorization before remote publication.
 
 ## Scope
 
@@ -8,7 +8,7 @@ This is a local review record. It does not imply that a remote pull request or h
 - Focused branch:
 - Commit SHA:
 - Intended files:
-- Out of scope:
+- Problem and resulting behavior:
 
 ## Tests and results
 
@@ -23,14 +23,14 @@ This is a local review record. It does not imply that a remote pull request or h
 - Swift/Python parity and conformance result:
 - Schema, spec, or consumer impact:
 
-## Local review
+## Review
 
 - [ ] Only intended files are staged or committed.
 - [ ] The staged diff was inspected, and `git diff --check` passed.
 - [ ] Relevant tests passed, or limitations are stated explicitly.
 - [ ] Scenario changes are synthetic and hand-authored; expected outcomes were not changed to make a consumer pass.
 - [ ] No secrets, credentials, real VINs or Bluetooth identifiers, private app code, generated artifacts, or machine-specific paths are included.
-- [ ] No push, publication, or release was performed.
+- [ ] Any remote publication is within the maintainer's authorization.
 
 Independent reviewer:
 
@@ -38,4 +38,4 @@ Verdict and limitations:
 
 ## Evidence
 
-Link local logs, test output, or artifact paths. Do not include credentials or real vehicle identifiers.
+Link relevant logs, test results, or artifacts, identifying whether they came from local or hosted execution. Do not include credentials, private app information, or real vehicle identifiers.
