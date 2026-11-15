@@ -18,6 +18,39 @@ private func scenarioURL(_ name: String) -> URL {
 /// Stand up a scripted ELM327 as a mock BLE peripheral, connect a real
 /// CoreBluetooth client to it, and run the body. Serialized because
 /// CoreBluetooth-Mock uses global simulation state.
+private struct MockCleanupFailure: Error {
+    let bodyError: (any Error)?
+    let cleanupError: any Error
+}
+
+@MainActor
+func withMockAdapter(
+    _ adapter: ElmulatorMockPeripheral,
+    disconnectTimeout: TimeInterval = 5,
+    _ body: (ELM327Client) async throws -> Void
+) async throws {
+    adapter.simulate()
+    let client = ELM327Client(forceMock: true)
+    var bodyError: (any Error)?
+    do {
+        try await client.connect()
+        try await body(client)
+    } catch { bodyError = error }
+
+    adapter.cancelPendingResponses()
+    var cleanupError: (any Error)?
+    do { try await client.disconnect(timeout: disconnectTimeout) }
+    catch { cleanupError = error }
+    await client.invalidate()
+    CBMCentralManagerMock.tearDownSimulation()
+    if let cleanupError {
+        if bodyError != nil { throw MockCleanupFailure(bodyError: bodyError, cleanupError: cleanupError) }
+        throw cleanupError
+    }
+    if let bodyError { throw bodyError }
+}
+
+@MainActor
 private func withScriptedAdapter(
     _ scenario: String,
     notifyChunkSize: Int = 20,
@@ -25,15 +58,10 @@ private func withScriptedAdapter(
 ) async throws {
     let loaded = try Scenario.load(from: scenarioURL(scenario))
     let adapter = ElmulatorMockPeripheral(scenario: loaded, notifyChunkSize: notifyChunkSize)
-    adapter.simulate()                                   // register + power on
-    defer { CBMCentralManagerMock.tearDownSimulation() }
-
-    let client = ELM327Client(forceMock: true)           // forceMock: run in CI, no radio
-    try await client.connect()
-    try await body(client)
-    client.disconnect()
+    try await withMockAdapter(adapter, body)
 }
 
+@MainActor
 @Suite("OBD2 app CI tests against a scripted BLE ELM327", .serialized)
 struct OBDCITests {
     @Test("connects over BLE and reads a stored P0420 with no radio")
