@@ -138,12 +138,16 @@ The composite action installs elmulator, serves a scenario over TCP, and hands b
 The Simulator cannot do Bluetooth, and there is [no supported way to mock `CBPeripheral`](https://developer.apple.com/forums/thread/764024), so the Bluetooth path tends to be the part of an OBD2 app that never gets a test. With CoreBluetooth-Mock, elmulator lets your real CoreBluetooth code run against a scripted ELM327 on an ordinary macOS runner:
 
 ```swift
+// Inside a @MainActor test in one serialized mock suite:
 let adapter = ElmulatorMockPeripheral(scenario: try .bundled("p0420_basic"))
 adapter.simulate()                                  // scripted ELM327 as a mock BLE peripheral
 let client = MyOBDClient(forceMock: true)           // your real CBCentralManager code
 try await client.connect()
 #expect(try await client.send("03").contains("43 01 04 20"))   // reads P0420, no radio
 ```
+
+
+Run the mock manager on the main queue. Before global teardown, call `adapter.cancelPendingResponses()` and await the client's disconnect callback, on both success and failure. See the walkthrough's complete cleanup example; fire-and-forget disconnect is insufficient.
 
 - Full walkthrough: [docs/testing-obd2-apps-in-ci.md](docs/testing-obd2-apps-in-ci.md)
 - Sample client and its tests: [`Sources/ObdSampleClient`](Sources/ObdSampleClient/ELM327Client.swift) and [`Tests/ObdSampleClientTests`](Tests/ObdSampleClientTests/OBDCITests.swift)

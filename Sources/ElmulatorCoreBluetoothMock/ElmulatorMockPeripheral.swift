@@ -12,6 +12,11 @@ import Foundation
 /// from [CoreBluetooth-Mock](https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock)),
 /// rather than adopting elmulator's own `CentralStack` protocol.
 ///
+/// This bridge requires main-queue mock operations (including the client manager)
+/// because the pinned mock has shared global state and a main-runloop advertising
+/// timer. Serialize simulations and cancel pending replies, await client disconnect,
+/// then tear down on main, including on throwing test paths.
+///
 /// Usage in a test:
 /// ```swift
 /// let scenario = try Scenario.load(from: url)
@@ -20,21 +25,27 @@ import Foundation
 /// CBMCentralManagerMock.simulateInitialState(.poweredOn)
 /// // ...create your manager with CBMCentralManagerFactory.instance(forceMock: true)
 /// // and run your real connect/discover/subscribe/write flow.
-/// CBMCentralManagerMock.tearDownSimulation()   // in tearDown
+/// adapter.cancelPendingResponses()
+/// // await client disconnect completion, then:
+/// CBMCentralManagerMock.tearDownSimulation()
 /// ```
-public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
+@MainActor
+public final class ElmulatorMockPeripheral: @preconcurrency CBMPeripheralSpecDelegate {
     private let profile: AdapterProfile
     private let notifyChunkSize: Int
     private let advertisedName: String
     private let applyDelays: Bool
-    private let deliveryQueue = DispatchQueue(label: "elmulator.mock.delivery")
+    private var deliveryGeneration: UInt64 = 0
     private var engine: ScenarioEngine
     private var inbound = ""
     private var notifyEnabled = false
 
     /// The transcript of the conversation served so far, when the engine
     /// configuration has `recordTranscript` on. Empty otherwise.
-    public var transcript: [TranscriptEntry] { engine.transcript }
+    public var transcript: [TranscriptEntry] {
+        dispatchPrecondition(condition: .onQueue(.main))
+        return engine.transcript
+    }
 
     private let serviceUUID: CBMUUID
     private let writeUUID: CBMUUID
@@ -54,6 +65,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
         advertisedName: String? = nil,
         applyDelays: Bool = false
     ) {
+        dispatchPrecondition(condition: .onQueue(.main))
         self.profile = profile
         self.notifyChunkSize = notifyChunkSize
         self.advertisedName = advertisedName ?? profile.advertisedName
@@ -105,8 +117,19 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
     /// Convenience: register this peripheral with the global mock and power on.
     /// Pair with `CBMCentralManagerMock.tearDownSimulation()` in your teardown.
     public func simulate(initialState: CBMManagerState = .poweredOn) {
+        dispatchPrecondition(condition: .onQueue(.main))
         CBMCentralManagerMock.simulatePeripherals([spec])
         CBMCentralManagerMock.simulateInitialState(initialState)
+    }
+
+    /// Invalidate pending delayed emissions before disconnect/teardown. Call on
+    /// main, like all bridge and mock-manager operations. It does not tear down
+    /// global state or pretend a connection has finished disconnecting.
+    public func cancelPendingResponses() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        deliveryGeneration &+= 1
+        inbound = ""
+        notifyEnabled = false
     }
 
     // MARK: - CBMPeripheralSpecDelegate
@@ -116,6 +139,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
         didReceiveSetNotifyRequest enabled: Bool,
         for characteristic: CBMCharacteristicMock
     ) -> Result<Void, Error> {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard characteristic.uuid == notifyUUID else {
             return .failure(CBMATTError(.requestNotSupported))
         }
@@ -129,6 +153,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
         didReceiveWriteRequestFor characteristic: CBMCharacteristicMock,
         data: Data
     ) -> Result<Void, Error> {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard characteristic.uuid == writeUUID else {
             return .failure(CBMATTError(.writeNotPermitted))
         }
@@ -142,6 +167,7 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
         didReceiveWriteCommandFor characteristic: CBMCharacteristicMock,
         data: Data
     ) {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard characteristic.uuid == writeUUID else { return }
         handle(data, on: peripheral)
     }
@@ -178,22 +204,25 @@ public final class ElmulatorMockPeripheral: CBMPeripheralSpecDelegate {
             return
         }
 
-        // Honor per-piece delays by scheduling cumulative emissions on our own
-        // queue. simulateValueUpdate routes delivery to the central's queue, so
-        // calling it from here is safe. Off by default so the common CI path
-        // stays fast; opt in with `applyDelays: true` to test timeout paths.
-        nonisolated(unsafe) let target = peripheral
-        nonisolated(unsafe) let characteristic = notifyCharacteristic
+        // The mock reads global manager/peripheral collections before scheduling
+        // callbacks. Stay on main with setup/discovery/teardown; callback routing
+        // alone does not make background access safe. Generation invalidation
+        // prevents a timed-out reply entering a later simulation.
+        let target = peripheral
+        let characteristic = notifyCharacteristic
+        let generation = deliveryGeneration
         var cumulativeMS = 0
         for piece in plan.pieces {
             cumulativeMS += piece.delayMS
             let chunks = Self.chunk(piece.bytes, size: notifyChunkSize).map { Data($0) }
-            deliveryQueue.asyncAfter(deadline: .now() + .milliseconds(cumulativeMS)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(cumulativeMS)) { [weak self] in
+                guard let self, self.deliveryGeneration == generation else { return }
                 for chunk in chunks { target.simulateValueUpdate(chunk, for: characteristic) }
             }
         }
         if plan.postAction == .disconnect {
-            deliveryQueue.asyncAfter(deadline: .now() + .milliseconds(cumulativeMS)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(cumulativeMS)) { [weak self] in
+                guard let self, self.deliveryGeneration == generation else { return }
                 target.simulateDisconnection()
             }
         }
