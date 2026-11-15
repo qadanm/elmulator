@@ -134,3 +134,5 @@ jobs:
           swift build --product elmulator-tcp
           python conformance/run_conformance.py \
             --swift-bin .build/debug/elmulator-tcp
+      - name: Shared Bluetooth mock lifecycle under Thread Sanitizer
+        run: swift test --sanitize=thread --filter OBDCITests

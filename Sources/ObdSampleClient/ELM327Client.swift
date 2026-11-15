@@ -16,8 +16,9 @@ import Foundation
 /// > so release builds use the system framework verbatim. Here we use the
 /// > `CBM*` names directly to keep the example explicit.
 ///
-/// All CoreBluetooth interaction and continuation state is confined to a single
-/// serial queue (the one handed to the manager), so there are no data races.
+/// Create this sample on the main queue. CoreBluetooth interaction and continuation
+/// state stay there: the pinned mock also delivers discovery from its main-runloop
+/// timer. Await disconnect before tearing down the shared simulation.
 public final class ELM327Client: NSObject, @unchecked Sendable {
     public enum ClientError: Error, Equatable {
         case bluetoothUnavailable
@@ -31,7 +32,7 @@ public final class ELM327Client: NSObject, @unchecked Sendable {
     private let writeUUID = CBMUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
     private let notifyUUID = CBMUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
 
-    private let queue = DispatchQueue(label: "obd.sample.client")
+    private let queue = DispatchQueue.main
     private var central: CBMCentralManager!
     private var peripheral: CBMPeripheral?
     private var writeCharacteristic: CBMCharacteristic?
@@ -39,10 +40,14 @@ public final class ELM327Client: NSObject, @unchecked Sendable {
     // One in-flight operation at a time (an ELM327 speaks one command at a time).
     private var connect: Pending<Void>?
     private var response: Pending<String>?
+    private var disconnection: Pending<Void>?
+    private var closing = false
+    private var invalidated = false
     private var responseBuffer = ""
 
     public init(forceMock: Bool = false) {
         super.init()
+        dispatchPrecondition(condition: .onQueue(.main))
         central = CBMCentralManagerFactory.instance(delegate: self, queue: queue, forceMock: forceMock)
     }
 
@@ -51,6 +56,10 @@ public final class ELM327Client: NSObject, @unchecked Sendable {
     public func connect(timeout: TimeInterval = 5) async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             queue.async {
+                guard !self.invalidated else {
+                    cont.resume(throwing: ClientError.notReady); return
+                }
+                self.closing = false
                 self.connect = Pending(cont, queue: self.queue, timeout: timeout,
                                        error: ClientError.timeout("connect")) { self.connect = nil }
                 if self.central.state == .poweredOn {
@@ -66,7 +75,7 @@ public final class ELM327Client: NSObject, @unchecked Sendable {
     public func send(_ command: String, timeout: TimeInterval = 5) async throws -> String {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<String, Error>) in
             queue.async {
-                guard let peripheral = self.peripheral, let write = self.writeCharacteristic else {
+                guard !self.closing, let peripheral = self.peripheral, let write = self.writeCharacteristic else {
                     cont.resume(throwing: ClientError.notReady); return
                 }
                 self.responseBuffer = ""
@@ -77,9 +86,48 @@ public final class ELM327Client: NSObject, @unchecked Sendable {
         }
     }
 
-    public func disconnect() {
-        queue.async {
-            if let peripheral = self.peripheral { self.central.cancelPeripheralConnection(peripheral) }
+    /// Completes after the delegate confirms disconnection, not merely after
+    /// enqueueing cancellation. The timeout is a failure, never teardown success.
+    public func disconnect(timeout: TimeInterval = 5) async throws {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            queue.async {
+                guard self.disconnection == nil else {
+                    cont.resume(throwing: ClientError.notReady); return
+                }
+                self.closing = true
+                if self.central.state == .poweredOn { self.central.stopScan() }
+                self.connect?.resume(.failure(ClientError.disconnected))
+                self.response?.resume(.failure(ClientError.disconnected))
+                guard let peripheral = self.peripheral, peripheral.state != .disconnected else {
+                    self.peripheral = nil
+                    self.writeCharacteristic = nil
+                    cont.resume(); return
+                }
+                self.disconnection = Pending(cont, queue: self.queue, timeout: timeout,
+                    error: ClientError.timeout("disconnect")) { self.disconnection = nil }
+                self.central.cancelPeripheralConnection(peripheral)
+            }
+        }
+    }
+
+    /// Terminally detach a test client before resetting shared mock state.
+    /// This also supports forced cleanup after a reported disconnect timeout;
+    /// it does not turn that timeout into a confirmed disconnection.
+    public func invalidate() async {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                self.invalidated = true
+                self.closing = true
+                if self.central.state == .poweredOn { self.central.stopScan() }
+                self.central.delegate = nil
+                self.peripheral?.delegate = nil
+                self.connect?.resume(.failure(ClientError.disconnected))
+                self.response?.resume(.failure(ClientError.disconnected))
+                self.disconnection?.resume(.failure(ClientError.disconnected))
+                self.peripheral = nil
+                self.writeCharacteristic = nil
+                continuation.resume()
+            }
         }
     }
 }
@@ -126,6 +174,7 @@ extension ELM327Client: CBMCentralManagerDelegate {
 
     public func centralManager(_ central: CBMCentralManager, didDiscover peripheral: CBMPeripheral,
                                advertisementData: [String: Any], rssi RSSI: NSNumber) {
+        guard !closing, connect != nil, self.peripheral == nil else { return }
         central.stopScan()
         self.peripheral = peripheral
         peripheral.delegate = self
@@ -133,6 +182,7 @@ extension ELM327Client: CBMCentralManagerDelegate {
     }
 
     public func centralManager(_ central: CBMCentralManager, didConnect peripheral: CBMPeripheral) {
+        guard !closing else { return }
         peripheral.discoverServices([serviceUUID])
     }
 
@@ -143,6 +193,10 @@ extension ELM327Client: CBMCentralManagerDelegate {
     public func centralManager(_ central: CBMCentralManager, didDisconnectPeripheral peripheral: CBMPeripheral, error: Error?) {
         connect?.resume(.failure(ClientError.disconnected))
         response?.resume(.failure(ClientError.disconnected))
+        self.peripheral?.delegate = nil
+        self.peripheral = nil
+        writeCharacteristic = nil
+        disconnection?.resume(.success(()))
     }
 }
 
