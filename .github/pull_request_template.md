@@ -1,6 +1,6 @@
 ## Change summary
 
-Use this template for a pull request or a local review record. Distinguish local test evidence from hosted CI results. Agent-driven work requires explicit maintainer authorization before remote publication.
+Use this template for a pull request or a local review record. Distinguish local test evidence from hosted CI results. Agent-driven public repository pushes and releases require owner authorization.
 
 ## Scope
 
