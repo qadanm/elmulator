@@ -1,5 +1,6 @@
 import CoreBluetoothMock
 import Elmulator
+import ElmulatorBLE
 import ElmulatorCoreBluetoothMock
 import Foundation
 import ObdSampleClient
@@ -43,21 +44,31 @@ extension OBDCITests {
         }
     }
 
-    @Test("cancelled delayed replies cannot satisfy the next command")
+    @Test("cancelling an enqueued bridge reply prevents it satisfying the next command")
     func cancelledReplyCannotCrossCommand() async throws {
         let scenario = Scenario(id: "cancelled-delivery", commands: [
             Scenario.Command(request: "03", responseChunks: ["OLD\r>"], delayMS: 120),
             Scenario.Command(request: "010C", responseChunks: ["NEW\r>"], delayMS: 240),
         ])
-        let adapter = ElmulatorMockPeripheral(scenario: scenario, applyDelays: true)
+        let adapter = ElmulatorMockPeripheral(scenario: scenario,
+            configuration: .init(recordTranscript: true), applyDelays: true)
         try await withMockAdapter(adapter) { client in
-            await #expect(throws: ELM327Client.ClientError.self) {
-                _ = try await client.send("03", timeout: 0.04)
-            }
+            // Queue the old emission and cancel it in one main-actor turn.
+            // A client timeout resumes asynchronously: under load OLD may have
+            // already reached Nordic's notification queue before this task resumes.
+            // cancelPendingResponses fences pending bridge emissions, not bytes
+            // already delivered to the underlying Bluetooth mock.
+            let write = CBMCharacteristicMock(
+                type: CBMUUID(string: AdapterProfile.fakeELM.writeCharacteristicUUID),
+                properties: .writeWithoutResponse)
+            adapter.peripheral(adapter.spec, didReceiveWriteCommandFor: write,
+                               data: Data("03\r".utf8))
+            #expect(adapter.transcript.map(\.normalized) == ["03"])
             adapter.cancelPendingResponses()
             let reply = try await client.send("010C", timeout: 2)
             #expect(reply.contains("NEW"))
             #expect(!reply.contains("OLD"))
+            #expect(adapter.transcript.map(\.normalized) == ["03", "010C"])
         }
     }
 
