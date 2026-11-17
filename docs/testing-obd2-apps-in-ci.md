@@ -40,16 +40,33 @@ Your connect, discover, subscribe, and write code stays exactly as it is. A comp
 import Elmulator
 import ElmulatorCoreBluetoothMock
 import CoreBluetoothMock
+import Testing
+import ObdSampleClient // copy the sample into your own test target or import it here
 
-let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))
-let adapter = ElmulatorMockPeripheral(scenario: scenario)   // a scripted ELM327
-adapter.simulate()                                          // register + power on the mock
-defer { CBMCentralManagerMock.tearDownSimulation() }
-
-let client = ELM327Client(forceMock: true)                  // your real client, mock transport
-try await client.connect()
-#expect(try await client.send("03").contains("43 01 04 20"))  // reads P0420, no radio
+// All tests sharing CoreBluetooth-Mock must be in one serialized suite.
+@MainActor
+@Suite(.serialized)
+struct AdapterTests {
+    @Test func storedCode() async throws {
+        let adapter = ElmulatorMockPeripheral(scenario: try .bundled("p0420_basic"))
+        adapter.simulate()
+        let client = ELM327Client(forceMock: true) // main-queue sample client
+        var failure: (any Error)?
+        do {
+            try await client.connect()
+            #expect(try await client.send("03").contains("43 01 04 20"))
+        } catch { failure = error }
+        adapter.cancelPendingResponses()
+        do { try await client.disconnect() }
+        catch { failure = error } // cleanup failure is still a failing test
+        await client.invalidate() // terminally detach before global reset
+        CBMCentralManagerMock.tearDownSimulation()
+        if let failure { throw failure }
+    }
+}
 ```
+
+The bridge is main-actor isolated. Configure the client manager with the main queue: the pinned mock uses global simulation state and a main-runloop discovery timer. Cancel delayed responses and await confirmed client disconnection **before** global teardown on main, including when the test body throws. A disconnect timeout is a failure; terminally invalidate the client and reset the mock environment without claiming acknowledged disconnect. The repository uses a [shared helper](../Tests/ObdSampleClientTests/OBDCITests.swift) that retains both body and cleanup errors when both fail. This restriction applies to the mock bridge, not to physical CoreBluetooth clients.
 
 That test connects over (mock) Bluetooth, subscribes to notifications, writes `03`, reassembles the reply across MTU-sized notifications, and asserts the stored trouble code, in milliseconds, on any CI runner.
 

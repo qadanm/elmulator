@@ -20,10 +20,14 @@ let stack: any CentralStack = FakeCentral(scenario: scenario)
 If your app uses `CBCentralManager` directly, the CoreBluetooth-Mock bridge turns a scenario into a mock BLE peripheral. Your real connection code runs against a scripted ELM327 under `swift test`, on a normal macOS runner.
 
 ```swift
+// Inside a @MainActor test in one serialized mock suite:
 let adapter = ElmulatorMockPeripheral(scenario: try .load(from: url))
 adapter.simulate()
 // your real CBCentralManager code connects and reads, with no radio
 ```
+
+
+Run the mock manager on the main queue. Before global teardown, call `adapter.cancelPendingResponses()` and await the client's disconnect callback, on both success and failure. See the walkthrough's complete cleanup example; fire-and-forget disconnect is insufficient.
 
 The full walkthrough is in [Test an iOS OBD2 app in CI](testing-obd2-apps-in-ci.md).
 
