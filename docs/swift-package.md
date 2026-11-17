@@ -7,7 +7,7 @@ A SwiftPM package for emulating an ELM327 OBD2 adapter over TCP and Bluetooth LE
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/qadanm/elmulator.git", from: "0.3.2"),
+    .package(url: "https://github.com/qadanm/elmulator.git", from: "0.3.3"),
 ],
 ```
 

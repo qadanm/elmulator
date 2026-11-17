@@ -6,13 +6,16 @@ to follow semantic versioning.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-16
+
 ### Added
 - Four synthetic CAN validation fixtures: wrong service, invalid hex, truncated payload, and padded RPM. Immutable byte expectations are tested in Swift and Python and automatically included in cross-language TCP conformance. See `docs/can-validation-fixtures.md`.
 - `conformance/run_conformance.py` now derives expected reply bytes and termination (prompt, stall, disconnect, skipped) independently from each scenario and checks both the Swift and Python servers against that oracle as well as byte-for-byte parity.
-- Regression tests for conformance harness startup and expectation handling: silent child, premature exit, malformed announcements, healthy startup/cleanup, disconnect/stall/skip semantics, default AT-vs-OBD replies, and cursor/repeat behavior.
+- Regression tests for conformance harness startup and expectation handling (silent child, premature exit, malformed announcements, healthy startup/cleanup, disconnect/stall/skip semantics, default AT-vs-OBD replies, and cursor/repeat behavior), authored-boundary framing under echo overrides, default-reply latency/jitter, Python CLI validation, and deterministic queued-reply cancellation ordering.
 
 ### Fixed
 - `conformance/run_conformance.py` used a blocking `readline()` under a deadline, so a child that never wrote output could hang the suite forever. Startup now reads on a daemon thread with a bounded timeout, validates the announcement, and reaps both child processes on all success and failure paths.
+- `ElmulatorMockPeripheral`: isolated Bluetooth mock sessions and awaited teardown so rapid test restarts and disconnect timeouts cannot contaminate replacement simulations.
 - Swift engine: with a host echo override off (`--echo off`, `echoOverride: false`), authored `response_chunks` boundaries were computed as if the echo prefix were still present, so replies were framed at the wrong offsets. Boundaries now follow the echo setting actually in effect.
 - Swift engine: unmatched (default) replies applied `--latency-ms` before every split piece instead of only the first, and never applied seeded jitter, diverging from the Python engine. Both now apply latency and jitter once, before the first piece.
 - Python engine: authored `response_chunks` boundaries were ignored, so the Python server framed replies differently from Swift even though SPEC.md requires authored boundaries to be preserved. Both engines now split identically.
@@ -21,14 +24,12 @@ to follow semantic versioning.
 - `release-pypi.yml` now checks that the package version matches the release tag before publishing.
 
 ### Changed
+- Updated `ios-corebluetooth-mock` dependency pin from `1.0.6` to `1.1.1`.
 - Stale internal references (old `FakeELMBLEPeripheral`, `Fixtures/`, and `Docs/testing/` paths) removed from CLI help, log prefixes, and doc comments.
-- Documentation: current version pins, a fixed multi-line shell example, corrected install and scenario paths, and Python's in-process `Conversation` is now described accurately.
+- Documentation: current version pins, a fixed multi-line shell example, corrected install and scenario paths, portable contributor/baseline guidance, and Python's in-process `Conversation` is now described accurately.
 - Python package metadata uses an SPDX license expression, a single-sourced version, Python 3.9–3.13 classifiers, and a `test` extra.
 - `Package.resolved` is tracked so Dependabot's Swift updates can open pull requests.
 - CI also runs the minimum supported Python (3.9), `ruff`, and a wheel/sdist build plus smoke test.
-
-### Added
-- Regression tests for authored-boundary framing under echo overrides, default-reply latency/jitter, and Python CLI validation.
 
 ## [0.3.2] - 2026-09-12
 
