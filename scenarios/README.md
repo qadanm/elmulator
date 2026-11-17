@@ -1,6 +1,6 @@
 # Example scenario library
 
-Seven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a runnable emulator input **and** a regression oracle (see each file's `expected_scan_summary`). Format reference: [SPEC.md](../SPEC.md).
+Eleven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a runnable emulator input **and** a regression oracle (see each file's `expected_scan_summary`). Format reference: [SPEC.md](../SPEC.md).
 
 | Scenario | What it exercises |
 |---|---|
@@ -9,8 +9,12 @@ Seven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a
 | [`p0301_basic`](p0301_basic.scenario.json) | One stored code (**P0301**, cylinder-1 misfire) with a freeze frame that carries a trailing pad byte. Exercises robust frame parsing. |
 | [`chunked_stream`](chunked_stream.scenario.json) | The clean scan delivered in **7-byte chunks** (`stream_split_bytes: 7`) to mimic BLE notification sizes and harsh TCP segmentation. Tests reassembly. |
 | [`headers_off_echo_on`](headers_off_echo_on.scenario.json) | A clone-adapter quirk: commands are echoed despite `ATE0`, headers are absent despite `ATH1`, and the VIN arrives in ELM multi-line form. Tests adapter-compatibility handling. |
-| [`adapter_disconnect`](adapter_disconnect.scenario.json) | Chaos: the first `0100` **stalls** (timeout → retry), the retry succeeds, then `03` **disconnects**. Validates typed transport-error handling. |
+| [`adapter_disconnect`](adapter_disconnect.scenario.json) | Chaos: the first `0100` **stalls** (timeout, then retry), the retry succeeds, then `03` **disconnects**. Validates typed transport-error handling. |
 | [`malformed`](malformed.scenario.json) | Garbage and truncated replies on every service (short bitmaps, unparseable hex, unknown-command markers). The scan must complete without crashing and attach warnings instead of inventing data. |
+| [`can_wrong_service`](can_wrong_service.scenario.json) | CAN validation fixture: requests Mode `03` and receives Mode `07` (`47`). Must reject instead of reporting stored codes. See [can-validation-fixtures.md](../docs/can-validation-fixtures.md). |
+| [`can_invalid_hex`](can_invalid_hex.scenario.json) | CAN validation fixture: returns non-hex bytes (`GG`). Must reject rather than becoming an empty success. |
+| [`can_truncated_payload`](can_truncated_payload.scenario.json) | CAN validation fixture: declared ISO-TP length `06` exceeds the four supplied bytes. Must fail as incomplete/invalid. |
+| [`can_padded_rpm`](can_padded_rpm.scenario.json) | CAN validation fixture: ISO-TP length `04` bounds `41 0C 1A F8` (`1726 rpm`) followed by padding bytes `AA BB CC`. |
 
 ## Using one
 

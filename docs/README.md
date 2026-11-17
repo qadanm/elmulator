@@ -8,5 +8,6 @@
 - [FAQ](faq.md): short answers to common questions.
 - [Roadmap](roadmap.md): what is planned and what is out of scope.
 - [The Swift package](swift-package.md): products, imports, and executables.
+- [CAN validation fixtures](can-validation-fixtures.md): synthetic byte expectations and provenance for the four CAN fixtures.
 
 For the scenario format, see [SPEC.md](../SPEC.md) and the JSON Schema in [spec/](../spec/).
