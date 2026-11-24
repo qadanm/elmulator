@@ -112,4 +112,198 @@ extension OBDCITests {
             #expect(reply.contains("ELM327"))
         }
     }
+
+    @Test("shared FFE0 exposes one notify/write characteristic and serves both write modes")
+    func sharedCharacteristicLayout() async throws {
+        let scenario = try Scenario.bundled("p0420_basic")
+        let adapter = ElmulatorMockPeripheral(scenario: scenario, profile: .sharedFFE0)
+        adapter.simulate()
+        let probe = SharedProfileProbe()
+
+        do {
+            try await probe.connect()
+            let characteristics = probe.discoveredCharacteristics
+            #expect(characteristics.count == 1)
+            let characteristic = try #require(characteristics.first)
+            #expect(characteristic.uuid == CBMUUID(string: "FFE1"))
+            #expect(characteristic.properties.contains(.notify))
+            #expect(characteristic.properties.contains(.write))
+            #expect(characteristic.properties.contains(.writeWithoutResponse))
+
+            let withoutResponse = try await probe.send("ATZ", withResponse: false)
+            #expect(withoutResponse.contains("ELM327"))
+
+            // The same characteristic must also accept a write-with-response.
+            let withResponse = try await probe.send("03", withResponse: true)
+            #expect(withResponse.contains("43 01 04 20"))
+        } catch {
+            adapter.cancelPendingResponses()
+            try? await probe.disconnect()
+            CBMCentralManagerMock.tearDownSimulation()
+            throw error
+        }
+
+        adapter.cancelPendingResponses()
+        try await probe.disconnect()
+        CBMCentralManagerMock.tearDownSimulation()
+    }
+}
+
+/// Minimal raw CoreBluetooth central used to inspect GATT layout. The sample
+/// client hardcodes Nordic UART, so a shared-profile test needs its own probe.
+private final class SharedProfileProbe: NSObject, @unchecked Sendable {
+    enum ProbeError: Error { case timeout, notReady }
+
+    private let serviceUUID = CBMUUID(string: "FFE0")
+    private let characteristicUUID = CBMUUID(string: "FFE1")
+    private var central: CBMCentralManager!
+    private var peripheral: CBMPeripheral?
+    private var characteristic: CBMCharacteristic?
+    private(set) var discoveredCharacteristics: [CBMCharacteristic] = []
+    private var replyBuffer = ""
+
+    private var connectPending: ProbePending<Void>?
+    private var replyPending: ProbePending<String>?
+    private var disconnectPending: ProbePending<Void>?
+
+    override init() {
+        super.init()
+        central = CBMCentralManagerFactory.instance(delegate: self, queue: .main, forceMock: true)
+    }
+
+    @MainActor func connect() async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            connectPending = ProbePending(continuation, timeout: 5, error: ProbeError.timeout)
+            if central.state == .poweredOn {
+                central.scanForPeripherals(withServices: [serviceUUID])
+            }
+        }
+    }
+
+    @MainActor func send(_ command: String, withResponse: Bool) async throws -> String {
+        guard let peripheral, let characteristic else { throw ProbeError.notReady }
+        replyBuffer = ""
+        return try await withCheckedThrowingContinuation { continuation in
+            replyPending = ProbePending(continuation, timeout: 5, error: ProbeError.timeout)
+            peripheral.writeValue(
+                Data((command + "\r").utf8),
+                for: characteristic,
+                type: withResponse ? .withResponse : .withoutResponse
+            )
+        }
+    }
+
+    @MainActor func disconnect() async throws {
+        guard let peripheral, peripheral.state != .disconnected else {
+            self.peripheral?.delegate = nil
+            self.peripheral = nil
+            return
+        }
+        try await withCheckedThrowingContinuation { continuation in
+            disconnectPending = ProbePending(continuation, timeout: 5, error: ProbeError.timeout)
+            central.cancelPeripheralConnection(peripheral)
+        }
+        self.peripheral?.delegate = nil
+        self.peripheral = nil
+        characteristic = nil
+    }
+}
+
+extension SharedProfileProbe: CBMCentralManagerDelegate {
+    func centralManagerDidUpdateState(_ central: CBMCentralManager) {
+        if central.state == .poweredOn, connectPending != nil {
+            central.scanForPeripherals(withServices: [serviceUUID])
+        }
+    }
+
+    func centralManager(_ central: CBMCentralManager, didDiscover peripheral: CBMPeripheral,
+                        advertisementData: [String: Any], rssi RSSI: NSNumber) {
+        guard connectPending != nil, self.peripheral == nil else { return }
+        central.stopScan()
+        self.peripheral = peripheral
+        peripheral.delegate = self
+        central.connect(peripheral)
+    }
+
+    func centralManager(_ central: CBMCentralManager, didConnect peripheral: CBMPeripheral) {
+        peripheral.discoverServices([serviceUUID])
+    }
+
+    func centralManager(_ central: CBMCentralManager, didFailToConnect peripheral: CBMPeripheral, error: Error?) {
+        connectPending?.finish(.failure(error ?? ProbeError.notReady))
+        connectPending = nil
+    }
+
+    func centralManager(_ central: CBMCentralManager, didDisconnectPeripheral peripheral: CBMPeripheral, error: Error?) {
+        disconnectPending?.finish(.success(()))
+        disconnectPending = nil
+    }
+}
+
+extension SharedProfileProbe: CBMPeripheralDelegate {
+    func peripheral(_ peripheral: CBMPeripheral, didDiscoverServices error: Error?) {
+        guard let service = peripheral.services?.first(where: { $0.uuid == serviceUUID }) else {
+            connectPending?.finish(.failure(ProbeError.notReady))
+            connectPending = nil
+            return
+        }
+        peripheral.discoverCharacteristics([characteristicUUID], for: service)
+    }
+
+    func peripheral(_ peripheral: CBMPeripheral, didDiscoverCharacteristicsFor service: CBMService, error: Error?) {
+        discoveredCharacteristics = service.characteristics ?? []
+        guard let notify = discoveredCharacteristics.first(where: { $0.uuid == characteristicUUID }) else {
+            connectPending?.finish(.failure(ProbeError.notReady))
+            connectPending = nil
+            return
+        }
+        characteristic = notify
+        peripheral.setNotifyValue(true, for: notify)
+    }
+
+    func peripheral(_ peripheral: CBMPeripheral, didUpdateNotificationStateFor characteristic: CBMCharacteristic, error: Error?) {
+        if let error {
+            connectPending?.finish(.failure(error))
+        } else {
+            connectPending?.finish(.success(()))
+        }
+        connectPending = nil
+    }
+
+    func peripheral(_ peripheral: CBMPeripheral, didUpdateValueFor characteristic: CBMCharacteristic, error: Error?) {
+        guard let data = characteristic.value else { return }
+        replyBuffer += String(decoding: data, as: UTF8.self)
+        if replyBuffer.contains(">") {
+            replyPending?.finish(.success(replyBuffer))
+            replyPending = nil
+        }
+    }
+
+    func peripheral(_ peripheral: CBMPeripheral, didWriteValueFor characteristic: CBMCharacteristic, error: Error?) {
+        if let error {
+            replyPending?.finish(.failure(error))
+            replyPending = nil
+        }
+    }
+}
+
+/// Checked continuation plus timeout, resumed at most once (main queue only).
+private final class ProbePending<T: Sendable>: @unchecked Sendable {
+    private var continuation: CheckedContinuation<T, Error>?
+    private var timeout: DispatchWorkItem?
+
+    init(_ continuation: CheckedContinuation<T, Error>, timeout seconds: TimeInterval, error: Error) {
+        self.continuation = continuation
+        let item = DispatchWorkItem { [weak self] in self?.finish(.failure(error)) }
+        timeout = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: item)
+    }
+
+    func finish(_ result: Result<T, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        timeout?.cancel()
+        timeout = nil
+        continuation.resume(with: result)
+    }
 }

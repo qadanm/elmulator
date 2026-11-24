@@ -15,10 +15,11 @@ Usage:
 
 Options:
   --scenario PATH        scenario file, e.g. scenarios/p0420_basic.scenario.json
+  --profile NAME         GATT layout preset: nordic (default), fff0, ffe0, 18f0
   --name NAME            advertised local name (default: FakeELM)
-  --service UUID         advertised service UUID (default: Nordic UART)
-  --write-uuid UUID      command write characteristic UUID
-  --notify-uuid UUID     reply notify characteristic UUID
+  --service UUID         advertised service UUID (overrides the preset)
+  --write-uuid UUID      command write characteristic UUID (overrides the preset)
+  --notify-uuid UUID     reply notify characteristic UUID (overrides the preset)
   --chunk-size N         notification payload size in bytes, at least 1 (default: 20)
   --latency-ms N         extra latency before each reply (default: 0)
   --jitter-ms N          deterministic jitter bound, uses --seed (default: 0)
@@ -27,8 +28,10 @@ Options:
   --disconnect-after N   drop the connection after N commands
   --help                 print this message
 
-The advertised UUIDs default to a Nordic UART style profile. Adapter clones
-vary, so verify against the real adapters before freezing them.
+The default profile is Nordic UART. Use --profile to pick a conventional
+FFF0, shared FFE0, or 18F0 layout. Individual UUID flags override that preset.
+Shared layouts expose one characteristic that both notifies and accepts writes.
+Adapter clones vary, so verify against the real adapters before freezing them.
 """
 
 func fail(_ message: String) -> Never {
@@ -48,7 +51,7 @@ func validUUIDString(_ value: String) -> Bool {
 
 func parseArguments(_ arguments: [String]) -> (scenarioPath: String, options: PeripheralHost.Options) {
     let knownOptions: Set<String> = [
-        "--scenario", "--name", "--service", "--write-uuid", "--notify-uuid",
+        "--scenario", "--profile", "--name", "--service", "--write-uuid", "--notify-uuid",
         "--chunk-size", "--latency-ms", "--jitter-ms", "--seed",
         "--split", "--disconnect-after",
     ]
@@ -85,7 +88,10 @@ func parseArguments(_ arguments: [String]) -> (scenarioPath: String, options: Pe
         fail("--name must not be empty")
     }
 
-    let base = AdapterProfile.nordicUART
+    let presetName = values["--profile"] ?? "nordic"
+    guard let base = AdapterProfile.preset(named: presetName) else {
+        fail("--profile must be one of: \(AdapterProfile.presetNames.joined(separator: ", "))")
+    }
     let profile = AdapterProfile(
         serviceUUID: values["--service"] ?? base.serviceUUID,
         writeCharacteristicUUID: values["--write-uuid"] ?? base.writeCharacteristicUUID,

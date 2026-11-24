@@ -84,7 +84,7 @@ public actor FakeCentral: CentralStack {
         continuation.yield(.characteristicsDiscovered(
             peripheralID: peripheralID,
             serviceUUID: serviceUUID,
-            characteristicUUIDs: [profile.writeCharacteristicUUID, profile.notifyCharacteristicUUID],
+            characteristicUUIDs: profile.characteristics.map(\.uuid),
             error: nil
         ))
     }

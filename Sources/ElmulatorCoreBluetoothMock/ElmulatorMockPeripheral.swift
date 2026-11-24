@@ -79,19 +79,36 @@ public final class ElmulatorMockPeripheral: @preconcurrency CBMPeripheralSpecDel
         self.writeUUID = writeUUID
         self.notifyUUID = notifyUUID
 
-        self.notifyCharacteristic = CBMCharacteristicMock(
-            type: notifyUUID,
-            properties: .notify,
-            descriptors: CBMDescriptorMock(type: CBMUUID(string: "2902"))  // CCCD
-        )
-        self.writeCharacteristic = CBMCharacteristicMock(
-            type: writeUUID,
-            properties: [.write, .writeWithoutResponse]
-        )
+        // A shared profile (for example FFE0/FFE1) must expose exactly one
+        // characteristic that both notifies and accepts writes. Two mock
+        // characteristics with the same UUID would show up twice in GATT
+        // discovery and make writes or subscriptions ambiguous.
+        var characteristics: [CBMCharacteristicMock] = []
+        for layout in profile.characteristics {
+            var properties: CBMCharacteristicProperties = []
+            if layout.notifies { properties.insert(.notify) }
+            if layout.write { properties.insert(.write) }
+            if layout.writeWithoutResponse { properties.insert(.writeWithoutResponse) }
+            let characteristic = CBMCharacteristicMock(
+                type: CBMUUID(string: layout.uuid),
+                properties: properties
+            )
+            if layout.notifies {
+                // CCCD, so the central can subscribe to this characteristic.
+                characteristic.descriptors = [CBMDescriptorMock(type: CBMUUID(string: "2902"))]
+            }
+            characteristics.append(characteristic)
+        }
+        guard let writeCharacteristic = characteristics.first,
+              let notifyCharacteristic = characteristics.last else {
+            preconditionFailure("an adapter profile must expose at least one characteristic")
+        }
+        self.writeCharacteristic = writeCharacteristic
+        self.notifyCharacteristic = notifyCharacteristic
         self.service = CBMServiceMock(
             type: serviceUUID,
             primary: true,
-            characteristics: writeCharacteristic, notifyCharacteristic
+            characteristics: characteristics
         )
     }
 

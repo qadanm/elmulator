@@ -112,7 +112,7 @@ final class CoreBluetoothStack: NSObject, CentralStack, @unchecked Sendable {
     }
 
     private static func key(_ peripheralID: String, _ serviceUUID: String, _ characteristicUUID: String) -> String {
-        "\(peripheralID)|\(serviceUUID.uppercased())|\(characteristicUUID.uppercased())"
+        "\(peripheralID)|\(AdapterProfile.canonicalUUID(serviceUUID))|\(AdapterProfile.canonicalUUID(characteristicUUID))"
     }
 }
 

@@ -24,13 +24,18 @@ runs:
   steps:
     - name: Install elmulator
       shell: bash
-      run: python3 -m pip install --upgrade "elmulator${{ inputs.version }}"
+      env:
+        ELMULATOR_VERSION: ${{ inputs.version }}
+      run: python3 -m pip install --upgrade "elmulator${ELMULATOR_VERSION}"
     - name: Start elmulator serve
       id: serve
       shell: bash
+      env:
+        ELMULATOR_SCENARIO: ${{ inputs.scenario }}
+        ELMULATOR_PORT: ${{ inputs.port }}
       run: |
-        python3 -m elmulator serve "${{ inputs.scenario }}" \
-          --host 127.0.0.1 --port "${{ inputs.port }}" > elmulator.out 2> elmulator.err &
+        python3 -m elmulator serve "$ELMULATOR_SCENARIO" \
+          --host 127.0.0.1 --port "$ELMULATOR_PORT" > elmulator.out 2> elmulator.err &
         for _ in $(seq 1 50); do
           line=$(grep -m1 '^LISTENING ' elmulator.out || true)
           if [ -n "$line" ]; then
