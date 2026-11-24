@@ -4,19 +4,23 @@ name: Publish to PyPI
 # Uses PyPI Trusted Publishing (OIDC), so no API token or secret is required.
 # One-time setup on PyPI: add a trusted publisher for this repo with
 #   owner: qadanm   repo: elmulator   workflow: release-pypi.yml   environment: pypi
+#
+# Manual workflow_dispatch is validation only. It runs the build job (sdist,
+# wheel and metadata check) and never enters the pypi environment or requests
+# an OIDC token.
 
 on:
   release:
     types: [published]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-publish:
+  build:
+    name: Build and validate distributions
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      contents: read        # checkout
-      id-token: write        # required for trusted publishing
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -37,8 +41,28 @@ jobs:
             exit 1
           fi
         working-directory: python
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: python/dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read        # no checkout, but keep the workflow default explicit
+      id-token: write        # required for trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist
       - name: Publish to PyPI
-        if: github.event_name == 'release'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: python/dist
+          packages-dir: dist

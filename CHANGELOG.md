@@ -6,13 +6,22 @@ to follow semantic versioning.
 
 ## [Unreleased]
 
+## [0.4.0] - pending publication
+
+Staged candidate. The latest published distribution and Action tag are still
+0.3.3; do not update published pins until tag `v0.4.0` is published and verified.
+
 ### Added
 - Reusable FFF0, FFE0 and 18F0 BLE layout presets, including one shared write/notify characteristic for FFE0 and opt-in selection in the macOS BLE CLI.
 - Five synthetic full-report, multi-ECU, and link-loss scenarios.
 - A downstream TCP example and a CI smoke test for the GitHub Action.
+- Serialized Swift sample-client coverage for a positive `can_full_report` read and the observed `can_delayed_link_loss` failure, with disconnect and cleanup through the shared mock helper.
 
 ### Fixed
 - Pass Action inputs as data to the shell, and make manual release-workflow dispatch package validation only.
+
+### Compatibility
+- Additive release. `obd2.sim_scenario.v1` is unchanged, Python still requires 3.9+, the Swift package still requires Swift 6 with macOS 14+/iOS 17+, and neither runtime gains a dependency. The release tag must match the package version as `v0.4.0`.
 
 ## [0.3.3] - 2026-11-16
 
