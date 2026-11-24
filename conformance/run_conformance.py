@@ -116,7 +116,7 @@ def start_server(cmd, timeout: float = STARTUP_TIMEOUT) -> tuple:
         raise
 
 
-def read_reply(sock) -> tuple:
+def read_reply(sock, *, wait_for_close: bool = False) -> tuple:
     """Read one reply as ``(bytes, closed)``: up to the ELM prompt, or until
     the peer goes silent (a stall) or closes (a disconnect)."""
     sock.settimeout(IDLE_TIMEOUT)
@@ -131,7 +131,7 @@ def read_reply(sock) -> tuple:
         if not chunk:
             return data, True
         data += chunk
-        if b">" in chunk:
+        if b">" in chunk and not wait_for_close:
             return data, False
 
 
@@ -141,18 +141,18 @@ class Reply(NamedTuple):
     skipped: bool  # an earlier command ended the connection
 
 
-def drive(port: int, commands) -> list:
+def drive(port: int, commands, expectations) -> list:
     """Send each command and collect ``Reply`` records, in order."""
     replies = []
     with socket.create_connection(("127.0.0.1", port), timeout=5) as sock:
         dead = False
-        for command in commands:
+        for command, expected in zip(commands, expectations):
             if dead:
                 replies.append(Reply(b"", True, True))
                 continue
             try:
                 sock.sendall((command + "\r").encode("ascii"))
-                data, closed = read_reply(sock)
+                data, closed = read_reply(sock, wait_for_close=expected.termination == "disconnect")
             except OSError:
                 data, closed = b"", True
             # Peer closed the connection (a scenario disconnect). Every later
@@ -285,8 +285,8 @@ def run(scenarios_dir: Path, swift_bin: str | None) -> int:
                     b_proc, b_port = start_server(swift_cmd(swift_bin, path))
                 else:
                     b_proc, b_port = start_server(python_cmd(path))
-                a = drive(a_port, commands)
-                b = drive(b_port, commands)
+                a = drive(a_port, commands, expected)
+                b = drive(b_port, commands, expected)
             except (StartupError, OSError) as exc:
                 failures += 1
                 print(f"  FAIL {path.name}\n    transport/setup error: {exc}")
