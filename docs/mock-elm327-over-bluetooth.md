@@ -52,3 +52,17 @@ Yes. The in-process fake and the CoreBluetooth-Mock bridge both run under `swift
 
 **What can the adapter do besides answer normally?**
 A scenario can split replies into Bluetooth-sized chunks, add delays, stall, drop the connection, or return malformed bytes, so you can test the cases that only show up with a real adapter.
+
+## BLE layouts used by ELM-compatible apps
+
+The Nordic UART layout remains the default. Select a standard test layout with
+`--profile fff0`, `--profile ffe0`, or `--profile 18f0`. For example:
+
+```sh
+swift run elmulator-ble --profile ffe0 --scenario scenarios/p0420_basic.scenario.json
+```
+
+Swift tests can pass `AdapterProfile.conventionalFFF0`, `.sharedFFE0`, or `.eighteenF0` to
+`ElmulatorMockPeripheral`. The FFE0 layout uses one FFE1 characteristic for
+both writing and notifications. UUID and name overrides still apply. These
+presets simulate GATT layouts. Verify physical adapter behavior independently.

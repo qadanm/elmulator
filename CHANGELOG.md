@@ -6,6 +6,14 @@ to follow semantic versioning.
 
 ## [Unreleased]
 
+### Added
+- Reusable FFF0, FFE0 and 18F0 BLE layout presets, including one shared write/notify characteristic for FFE0 and opt-in selection in the macOS BLE CLI.
+- Five synthetic full-report, multi-ECU, and link-loss scenarios.
+- A downstream TCP example and a CI smoke test for the GitHub Action.
+
+### Fixed
+- Pass Action inputs as data to the shell, and make manual release-workflow dispatch package validation only.
+
 ## [0.3.3] - 2026-11-16
 
 ### Added

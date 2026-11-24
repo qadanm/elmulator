@@ -114,6 +114,31 @@ jobs:
           elmulator --version
           elmulator self-test
           elmulator validate
+          python examples/tcp_report.py
+
+  action:
+    name: Published Action smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/checkout@v7
+      - uses: ./
+        id: elmulator
+        with:
+          scenario: p0420_basic
+          version: "==0.3.3"
+      - env:
+          ELMULATOR_PORT: ${{ steps.elmulator.outputs.port }}
+        run: |
+          python - <<'PYTHON'
+          import os
+          from elmulator import Client
+
+          with Client(port=int(os.environ["ELMULATOR_PORT"])) as client:
+              assert "43 01 04 20" in client.send("03")
+          PYTHON
 
   swift:
     name: Swift (build, test, conformance vs Python)

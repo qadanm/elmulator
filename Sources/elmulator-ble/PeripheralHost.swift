@@ -173,22 +173,29 @@ extension PeripheralHost: CBPeripheralManagerDelegate {
     }
 
     private func publishService(_ peripheral: CBPeripheralManager) {
-        let writeCharacteristic = CBMutableCharacteristic(
-            type: CBUUID(string: options.profile.writeCharacteristicUUID),
-            properties: [.write, .writeWithoutResponse],
-            value: nil,
-            permissions: [.writeable]
-        )
-        let notify = CBMutableCharacteristic(
-            type: CBUUID(string: options.profile.notifyCharacteristicUUID),
-            properties: [.notify],
-            value: nil,
-            permissions: [.readable]
-        )
-        self.notifyCharacteristic = notify
+        var characteristics: [CBMutableCharacteristic] = []
+        for layout in options.profile.characteristics {
+            var properties: CBCharacteristicProperties = []
+            if layout.notifies { properties.insert(.notify) }
+            if layout.write { properties.insert(.write) }
+            if layout.writeWithoutResponse { properties.insert(.writeWithoutResponse) }
+
+            var permissions: CBAttributePermissions = []
+            if layout.write || layout.writeWithoutResponse { permissions.insert(.writeable) }
+            if layout.notifies { permissions.insert(.readable) }
+
+            let characteristic = CBMutableCharacteristic(
+                type: CBUUID(string: layout.uuid),
+                properties: properties,
+                value: nil,
+                permissions: permissions
+            )
+            if layout.notifies { self.notifyCharacteristic = characteristic }
+            characteristics.append(characteristic)
+        }
 
         let service = CBMutableService(type: CBUUID(string: options.profile.serviceUUID), primary: true)
-        service.characteristics = [writeCharacteristic, notify]
+        service.characteristics = characteristics
         peripheral.add(service)
 
         peripheral.startAdvertising([

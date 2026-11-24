@@ -1,6 +1,6 @@
 # Example scenario library
 
-Eleven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a runnable emulator input **and** a regression oracle (see each file's `expected_scan_summary`). Format reference: [SPEC.md](../SPEC.md).
+Sixteen hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a runnable emulator input **and** a regression oracle (see each file's `expected_scan_summary`). Format reference: [SPEC.md](../SPEC.md).
 
 | Scenario | What it exercises |
 |---|---|
@@ -15,6 +15,14 @@ Eleven hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is 
 | [`can_invalid_hex`](can_invalid_hex.scenario.json) | CAN validation fixture: returns non-hex bytes (`GG`). Must reject rather than becoming an empty success. |
 | [`can_truncated_payload`](can_truncated_payload.scenario.json) | CAN validation fixture: declared ISO-TP length `06` exceeds the four supplied bytes. Must fail as incomplete/invalid. |
 | [`can_padded_rpm`](can_padded_rpm.scenario.json) | CAN validation fixture: ISO-TP length `04` bounds `41 0C 1A F8` (`1726 rpm`) followed by padding bytes `AA BB CC`. |
+
+| [`can_full_report`](can_full_report.scenario.json) | Two ECU addresses with independent Mode 01 scopes, P0420 freeze frame, CAN monitor records, calibration IDs and CVNs. |
+| [`can_missing_ecu`](can_missing_ecu.scenario.json) | A known ECU omits pending codes and drive-cycle readiness. |
+| [`can_wrong_freeze_frame`](can_wrong_freeze_frame.scenario.json) | Mode 02 returns the wrong frame number despite otherwise valid framing. |
+| [`can_wrong_monitor`](can_wrong_monitor.scenario.json) | The second Mode 06 result names a different monitor. |
+| [`can_delayed_link_loss`](can_delayed_link_loss.scenario.json) | Seven-byte chunks, delayed RPM, a deliberate disconnection, and a request that stalls. |
+
+The separate [wire expectations](../docs/report-fixtures.md) give independent meanings for these synthetic bytes. Inspect adapter outputs and the decoded application separately.
 
 ## Using one
 
