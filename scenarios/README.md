@@ -15,7 +15,6 @@ Sixteen hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is
 | [`can_invalid_hex`](can_invalid_hex.scenario.json) | CAN validation fixture: returns non-hex bytes (`GG`). Must reject rather than becoming an empty success. |
 | [`can_truncated_payload`](can_truncated_payload.scenario.json) | CAN validation fixture: declared ISO-TP length `06` exceeds the four supplied bytes. Must fail as incomplete/invalid. |
 | [`can_padded_rpm`](can_padded_rpm.scenario.json) | CAN validation fixture: ISO-TP length `04` bounds `41 0C 1A F8` (`1726 rpm`) followed by padding bytes `AA BB CC`. |
-
 | [`can_full_report`](can_full_report.scenario.json) | Two ECU addresses with independent Mode 01 scopes, P0420 freeze frame, CAN monitor records, calibration IDs and CVNs. |
 | [`can_missing_ecu`](can_missing_ecu.scenario.json) | A known ECU omits pending codes and drive-cycle readiness. |
 | [`can_wrong_freeze_frame`](can_wrong_freeze_frame.scenario.json) | Mode 02 returns the wrong frame number despite otherwise valid framing. |

@@ -88,4 +88,13 @@ struct AdapterProfileTests {
         #expect(mixedCase.hasSharedCharacteristic)
         #expect(mixedCase.characteristics.count == 1)
     }
+    @Test("a full Bluetooth base UUID aliases a short characteristic UUID")
+    func aliasedCharacteristic() {
+        let profile = AdapterProfile(serviceUUID: "FFE0",
+            writeCharacteristicUUID: "FFE1",
+            notifyCharacteristicUUID: "0000ffe1-0000-1000-8000-00805f9b34fb",
+            writeWithResponse: true, advertisedName: "SyntheticELM")
+        #expect(profile.hasSharedCharacteristic)
+        #expect(profile.characteristics.map(\.uuid) == ["FFE1"])
+    }
 }

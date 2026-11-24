@@ -184,6 +184,26 @@ struct FakeCentralTests {
         #expect(reply.notifyUUID == profile.notifyCharacteristicUUID)
     }
 
+    @Test("mixed UUID spellings negotiate one shared characteristic")
+    func mixedUUIDHandshake() async throws {
+        let profile = AdapterProfile(serviceUUID: "FFE0", writeCharacteristicUUID: "FFE1",
+            notifyCharacteristicUUID: "0000FFE1-0000-1000-8000-00805F9B34FB",
+            writeWithResponse: false, advertisedName: "SyntheticELM")
+        var state = ConnectionStateMachine(profile: profile)
+        let id = "synthetic"
+        _ = state.handle(.start)
+        _ = state.handle(.poweredOn)
+        // Use the same events that a central returns after the user starts scanning.
+        _ = state.handle(.discovered(.init(id: id, name: "SyntheticELM")))
+        _ = state.handle(.connected(peripheralID: id))
+        _ = state.handle(.servicesDiscovered(peripheralID: id, serviceUUIDs: ["FFE0"], error: nil))
+        let actions = state.handle(.characteristicsDiscovered(peripheralID: id, serviceUUID: "FFE0",
+            characteristicUUIDs: ["FFE1"], error: nil))
+        #expect(!actions.isEmpty)
+        _ = state.handle(.notifyStateChanged(peripheralID: id, characteristicUUID: "FFE1", isNotifying: true, error: nil))
+        #expect(state.state == .ready(peripheralID: id))
+    }
+
     @Test("cancel reports a disconnect before the event stream finishes")
     func cancelTeardown() async throws {
         let scenario = try Scenario.load(from: scenarioURL("p0420_basic"))

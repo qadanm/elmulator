@@ -81,7 +81,7 @@ public struct ConnectionStateMachine: Sendable {
     }
 
     private static func sameUUID(_ lhs: String, _ rhs: String) -> Bool {
-        lhs.caseInsensitiveCompare(rhs) == .orderedSame
+        AdapterProfile.canonicalUUID(lhs) == AdapterProfile.canonicalUUID(rhs)
     }
 
     public mutating func handle(_ event: ConnectionEvent) -> [ConnectionAction] {
@@ -134,7 +134,7 @@ public struct ConnectionStateMachine: Sendable {
             }
             state = .discoveringCharacteristics(peripheralID: peripheralID)
             return [.discoverCharacteristics(
-                [profile.writeCharacteristicUUID, profile.notifyCharacteristicUUID],
+                profile.characteristics.map(\.uuid),
                 serviceUUID: profile.serviceUUID,
                 peripheralID: peripheralID
             )]

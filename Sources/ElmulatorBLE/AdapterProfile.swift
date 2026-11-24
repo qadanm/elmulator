@@ -63,9 +63,19 @@ public struct AdapterProfile: Sendable, Equatable {
     }
 
     /// True when commands and replies travel on the same characteristic.
-    /// Comparisons ignore case because CoreBluetooth normalizes UUID strings.
+    /// Short and full Bluetooth base UUID spellings identify the same characteristic.
     public var hasSharedCharacteristic: Bool {
-        writeCharacteristicUUID.caseInsensitiveCompare(notifyCharacteristicUUID) == .orderedSame
+        Self.canonicalUUID(writeCharacteristicUUID) == Self.canonicalUUID(notifyCharacteristicUUID)
+    }
+
+    static func canonicalUUID(_ spelling: String) -> String {
+        let uuid = spelling.uppercased()
+        if uuid.count == 4, UInt16(uuid, radix: 16) != nil { return "0000" + uuid }
+        let baseSuffix = "-0000-1000-8000-00805F9B34FB"
+        if uuid.count == 36, uuid.hasSuffix(baseSuffix), UInt32(uuid.prefix(8), radix: 16) != nil {
+            return String(uuid.prefix(8))
+        }
+        return uuid
     }
 
     /// The characteristics this profile exposes, deduplicated when the write
