@@ -42,7 +42,7 @@ jobs:
           fi
         working-directory: python
       - name: Upload distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-distributions
           path: python/dist/*
