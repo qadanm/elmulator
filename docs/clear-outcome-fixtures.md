@@ -19,7 +19,14 @@ PYTHON
 
 The expected order is one pre-scan using `03`, `07`, `0A` and `0101`, one clear request, and, for the acknowledged and negative fixtures, the same readback sequence. A new connection or `Conversation` starts the script from the first reply for each request. Repeated reads advance the scripted reply cursor. Follow the stated order when comparing pre- and post-clear evidence. Client tests should count submissions and decide whether a readback is appropriate for each outcome.
 
-For stream tests, use `elmulator serve` or `elmulator-tcp` with one of the fixture names on loopback. The public `Conversation` transcript includes a planned post-action. A TCP test can distinguish peer EOF from a read deadline while the socket stays open.
+For stream tests, start either command from the repository root. Both servers bind to `127.0.0.1` and print `LISTENING <port>` when ready. Python accepts a bundled fixture name. The Swift CLI takes a scenario file path.
+
+```sh
+PYTHONPATH=python/src python3 -m elmulator serve can_clear_acknowledged --host 127.0.0.1 --port 0
+swift run elmulator-tcp --scenario scenarios/can_clear_acknowledged.scenario.json --port 0
+```
+
+The public `Conversation` transcript includes a planned post-action. A TCP test can distinguish peer EOF from a read deadline while the socket stays open.
 
 ## Wire expectations
 
