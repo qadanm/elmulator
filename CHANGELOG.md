@@ -6,6 +6,9 @@ to follow semantic versioning.
 
 ## [Unreleased]
 
+### Added
+- Six bundled synthetic CAN clear-outcome scenarios for two-ECU acknowledgment, final negative response, lost acknowledgment, silence, partial acknowledgment, and pending without a final reply. The success transcript includes stored and pending readback, readiness changes, and permanent-code retention. See [the wire expectations](docs/clear-outcome-fixtures.md).
+
 ## [0.4.0] - pending publication
 
 Staged candidate. The latest published distribution and Action tag are still

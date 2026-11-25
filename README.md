@@ -48,7 +48,7 @@ One scenario engine backs every surface, so the same scripted adapter drives a f
   </picture>
 </p>
 
-A scenario is just JSON: you write what the adapter replies, how it splits the reply into chunks, how long it waits, and when it stalls, drops the connection, or sends back garbage. Each file also records the scan result it should produce, so it doubles as a regression fixture. The real Bluetooth peripheral advertises an ELM327-style GATT profile (Nordic UART by default) and your app connects over an actual radio, nothing mocked; everywhere else the same engine runs with no radio at all.
+A scenario defines what the adapter replies, how it splits the reply, how long it waits, and when it stalls or disconnects. Read-only examples can record expected scan results. The [clear-outcome cases](docs/clear-outcome-fixtures.md) have ordered wire expectations. The Bluetooth peripheral advertises an ELM327-style GATT profile (Nordic UART by default) for clients connecting over a radio. The other surfaces run the same scenario engine in software.
 
 The closest tool out there is [ELM327-emulator](https://github.com/Ircama/ELM327-emulator). It is good, but its Bluetooth support is RFCOMM serial (classic Bluetooth SPP) rather than the BLE/GATT that iOS adapters use, and its CC-BY-NC-SA license rules out commercial use. elmulator does BLE, has a testing story for iOS and CI, and is MIT. (Checked against its repo in 2026.)
 
@@ -166,7 +166,7 @@ Run the mock manager on the main queue. Before global teardown, call `adapter.ca
 | BLE peripheral | `elmulator-ble` (macOS) | real CoreBluetooth peripheral advertising an ELM327 GATT profile |
 | BLE transport kit | `ElmulatorBLE` | GATT profile, connection state machine, `CentralStack` protocol, real central |
 | Scenario format | [`SPEC.md`](SPEC.md) and [`spec/`](spec/) | the `obd2.sim_scenario.v1` contract and its JSON Schema |
-| Example library | [`scenarios/`](scenarios/) | seven scenarios, each doubling as a regression fixture, and each loadable by name |
+| Example library | [`scenarios/`](scenarios/) | Bundled scenarios with readback, transport fault, and [synthetic clear-outcome](docs/clear-outcome-fixtures.md) examples |
 | Conformance suite | [`conformance/`](conformance/) | byte-for-byte parity across implementations |
 
 ## Docs
@@ -179,7 +179,7 @@ Run the mock manager on the main queue. Before global teardown, call `adapter.ca
 
 ## The scenario format
 
-A scenario is a JSON file that describes a synthetic ELM327 conversation. For each command you give the request, the reply, and details like the delay, whether it echoes, the prompt behavior, and what happens afterward (a stall or a disconnect). There is also an `expected_scan_summary` block, which is the result a scan should end up with, so the file works as a test fixture too. See [SPEC.md](SPEC.md) for the full format and [scenarios/](scenarios/) for worked examples.
+A scenario is a JSON file that describes a synthetic ELM327 conversation. Each command specifies the request, reply, delay, echo, prompt, and any stall or disconnect. The `expected_scan_summary` block can describe decoded values for a read-only scan. See [SPEC.md](SPEC.md) for the full format and [scenarios/](scenarios/) for worked examples.
 
 ```jsonc
 {

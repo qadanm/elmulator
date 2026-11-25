@@ -1,0 +1,70 @@
+{
+  "schema_version": "obd2.sim_scenario.v1",
+  "scenario_id": "can_clear_partial_ack",
+  "synthetic": true,
+  "description": "Both ECUs respond to the pre-scan. Only one acknowledges the synthetic clear before the prompt.",
+  "adapter_profile": "elm327_like_tcp",
+  "defaults": {
+    "at_response": "OK\r\r>",
+    "obd_response": "NO DATA\r\r>"
+  },
+  "warnings": [],
+  "commands": [
+    {
+      "request": "ATZ",
+      "response_chunks": [
+        "ELM327 v1.5\r\r>"
+      ],
+      "echo": true
+    },
+    {
+      "request": "ATDPN",
+      "response_chunks": [
+        "A6\r\r>"
+      ]
+    },
+    {
+      "request": "0100",
+      "response_chunks": [
+        "7E8 06 41 00 80 08 00 00\r7EA 06 41 00 80 08 00 00\r\r>"
+      ]
+    },
+    {
+      "request": "010D",
+      "response_chunks": [
+        "7E8 03 41 0D 00\r7EA 03 41 0D 00\r\r>"
+      ]
+    },
+    {
+      "request": "03",
+      "response_chunks": [
+        "7E8 04 43 01 04 20\r7EA 02 43 00\r\r>"
+      ]
+    },
+    {
+      "request": "07",
+      "response_chunks": [
+        "7E8 04 47 01 03 01\r7EA 02 47 00\r\r>"
+      ]
+    },
+    {
+      "request": "0A",
+      "response_chunks": [
+        "7E8 04 4A 01 04 20\r7EA 02 4A 00\r\r>"
+      ]
+    },
+    {
+      "request": "0101",
+      "response_chunks": [
+        "7E8 06 41 01 81 07 01 00\r7EA 06 41 01 00 04 00 00\r\r>"
+      ]
+    },
+    {
+      "request": "04",
+      "response_chunks": [
+        "7E8 01 44\r\r>"
+      ]
+    }
+  ],
+  "expected_scan_summary": {}
+}
