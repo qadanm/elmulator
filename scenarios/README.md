@@ -1,6 +1,6 @@
 # Example scenario library
 
-Sixteen hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is a runnable emulator input **and** a regression oracle (see each file's `expected_scan_summary`). Format reference: [SPEC.md](../SPEC.md).
+These hand-authored, synthetic `obd2.sim_scenario.v1` scenarios are runnable emulator inputs. Read-only scan fixtures can provide an `expected_scan_summary`. Clear-outcome fixtures have separate ordered [wire expectations](../docs/clear-outcome-fixtures.md). [Format reference](../SPEC.md)
 
 | Scenario | What it exercises |
 |---|---|
@@ -20,6 +20,12 @@ Sixteen hand-authored, fully synthetic `obd2.sim_scenario.v1` scenarios. Each is
 | [`can_wrong_freeze_frame`](can_wrong_freeze_frame.scenario.json) | Mode 02 returns the wrong frame number despite otherwise valid framing. |
 | [`can_wrong_monitor`](can_wrong_monitor.scenario.json) | The second Mode 06 result names a different monitor. |
 | [`can_delayed_link_loss`](can_delayed_link_loss.scenario.json) | Seven-byte chunks, delayed RPM, a deliberate disconnection, and a request that stalls. |
+| [`can_clear_acknowledged`](can_clear_acknowledged.scenario.json) | Both ECUs acknowledge, successive stored and pending scans are empty, readiness is incomplete, and the permanent code remains. |
+| [`can_clear_negative`](can_clear_negative.scenario.json) | Both ECUs return final negative responses, followed by unchanged scripted readback. |
+| [`can_clear_lost_ack`](can_clear_lost_ack.scenario.json) | The connection closes with no acknowledgment bytes. |
+| [`can_clear_timeout`](can_clear_timeout.scenario.json) | The link stays open and sends no reply bytes. |
+| [`can_clear_partial_ack`](can_clear_partial_ack.scenario.json) | Only one of two pre-scan responders acknowledges before the prompt. |
+| [`can_clear_pending`](can_clear_pending.scenario.json) | One acknowledgment and a pending response from the other ECU, with no final reply or prompt. |
 
 The separate [wire expectations](../docs/report-fixtures.md) give independent meanings for these synthetic bytes. Inspect adapter outputs and the decoded application separately.
 
